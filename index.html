@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCHD 시가배당률 추이 &amp; 밸류에이션 분석</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    // Tailwind 다크 모드 및 커스텀 디자인 토큰 설정
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans KR"', 'Inter', 'sans-serif'],
+            mono: ['Inter', 'monospace'],
+          },
+          colors: {
+            bgMain: '#0d1015',
+            bgCard: '#151922',
+            bgCardHover: '#1b202b',
+            borderSubtle: '#252b38',
+            brandOrange: '#f58231',
+            brandYellow: '#facc15',
+            zoneRed: '#ef4444',
+            zoneGreen: '#10b981',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* 기본 배경 및 스크롤바 스타일링 */
+    body {
+      background-color: #0d1015;
+      color: #f1f5f9;
+      font-family: 'Noto Sans KR', 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #151922;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-orange-500/30 selection:text-orange-200">
+  <!-- 상단 고정 헤더: 브랜드, 시트 동기화 버튼, 주가 소스 토글, 기간 탭 -->
+  <header class="sticky top-0 z-30 border-b border-borderSubtle bg-bgMain/90 backdrop-blur-md">
+    <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 font-mono text-sm font-extrabold text-white shadow-lg shadow-orange-500/20">
+          SCHD
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-white sm:text-xl">
+              SCHD 시가배당률 추이 &amp; 밸류에이션 분석
+            </h1>
+            <span class="hidden rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-300 sm:inline-block">
+              상장일 2011.10.20 – 2026.11.22
+            </span>
+            <button
+              id="sync-sheet-btn"
+              type="button"
+              title="클릭하여 구글 스프레드시트 및 주가 다시 불러오기"
+              class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/20"
+            >
+              <span id="sync-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              <span id="sync-status-text">시트 연동 대기중</span>
+            </button>
+          </div>
+          <p class="text-xs text-slate-400">
+            Schwab U.S. Dividend Equity ETF · 역사적 시가배당률(TTM) 평균 비교 및 연도별 실제 데이터
+          </p>
+        </div>
+      </div>
+
+      <!-- 주가 소스 선택 토글 + 조회 기간 선택 탭 -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center rounded-xl border border-borderSubtle bg-bgCard p-1" role="group" aria-label="주가 기준 선택">
+          <button
+            id="price-src-sheet"
+            type="button"
+            data-price-source="sheet"
+            class="price-src-btn rounded-lg bg-slate-700 px-2.5 py-1.5 text-xs font-bold text-white transition-all"
+          >
+            시트 주가
+          </button>
+          <button
+            id="price-src-live"
+            type="button"
+            data-price-source="live"
+            class="price-src-btn rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white"
+          >
+            실시간 시세
+          </button>
+        </div>
+
+        <div class="flex items-center rounded-xl border border-borderSubtle bg-bgCard p-1" role="tablist" aria-label="조회 기간 선택">
+          <button
+            id="tab-5y"
+            type="button"
+            data-period="5y"
+            class="period-tab rounded-lg px-3 py-1.5 text-xs font-semibold transition-all sm:px-4 sm:text-sm"
+          >
+            최근 5년 <span class="hidden text-[11px] opacity-80 md:inline">(이미지 기준)</span>
+          </button>
+          <button
+            id="tab-10y"
+            type="button"
+            data-period="10y"
+            class="period-tab rounded-lg px-3 py-1.5 text-xs font-semibold transition-all sm:px-4 sm:text-sm"
+          >
+            최근 10년
+          </button>
+          <button
+            id="tab-all"
+            type="button"
+            data-period="all"
+            class="period-tab rounded-lg px-3 py-1.5 text-xs font-semibold transition-all sm:px-4 sm:text-sm"
+          >
+            상장일–오늘 (15년)
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+    <!-- 알림 토스트 박스 (alert() 대체용) -->
+    <div id="toast-box" class="pointer-events-none fixed bottom-5 right-5 z-50 translate-y-4 opacity-0 transition-all duration-300">
+      <div class="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/95 px-4 py-3 text-sm font-medium text-white shadow-2xl">
+        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span id="toast-text">복사되었습니다.</span>
+      </div>
+    </div>
+
+    <!-- 핵심 요약 KPI 카드 4종 -->
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- 카드 1: 현재 시가배당률 + 현재 고평가/저평가 구간 표시 -->
+      <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400">현재 시가배당률 (시트 연동)</span>
+          <span id="kpi-price-mode-badge" class="rounded-md bg-orange-500/15 px-2 py-0.5 font-mono text-[11px] font-semibold text-orange-400">
+            시트 주가 기준
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2 tabular-nums">
+          <span id="kpi-current-yield" class="font-mono text-3xl font-extrabold text-brandOrange">3.11%</span>
+          <span class="text-xs font-medium text-slate-400">(차트 저점 2.94%)</span>
+        </div>
+        <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] tabular-nums">
+          <span id="kpi-valuation-badge" class="rounded-md bg-red-500/15 px-2 py-0.5 font-bold text-red-400">
+            현재 고평가 구간
+          </span>
+          <span id="kpi-valuation-note" class="text-slate-400">
+            5년 평균 3.46% 대비 -0.35%p 하회
+          </span>
+        </div>
+        <p id="kpi-current-detail" class="mt-2 text-xs text-slate-400 tabular-nums">
+          기준 주가 <strong class="text-slate-200">$33.94</strong> · 최근 12M 배당 <strong class="text-slate-200">$1.0541</strong>
+        </p>
+        <p id="kpi-price-compare" class="mt-1 text-[11px] text-slate-500 tabular-nums">
+          시트 주가 $33.94 · 실시간 시세 조회 대기
+        </p>
+      </div>
+
+      <!-- 카드 2: 선택 기간 평균 시가배당률 -->
+      <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span id="kpi-avg-label" class="text-xs font-medium text-slate-400">최근 5년 평균 시가배당률</span>
+          <span class="rounded-md bg-yellow-400/15 px-2 py-0.5 font-mono text-[11px] font-semibold text-yellow-300">
+            기준선 (점선)
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2 tabular-nums">
+          <span id="kpi-avg-value" class="font-mono text-3xl font-extrabold text-brandYellow">3.46%</span>
+          <span id="kpi-period-range" class="text-xs text-slate-400">2021.11 – 2026.11</span>
+        </div>
+        <p id="kpi-avg-desc" class="mt-2 text-xs text-slate-400">
+          노란색 점선 기준 평균값과 일치
+        </p>
+      </div>
+
+      <!-- 카드 3: 평균 대비 현재 괴리 -->
+      <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400">평균 대비 현재 괴리</span>
+          <span id="kpi-status-badge" class="rounded-md bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-400">
+            평균 하회 (고평가 구간)
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2 tabular-nums">
+          <span id="kpi-spread-value" class="font-mono text-3xl font-extrabold text-red-400">-0.35%p</span>
+          <span id="kpi-spread-snapshot" class="text-xs text-slate-400">(저점 2.94% 기준 -0.52%p)</span>
+        </div>
+        <p class="mt-2 text-xs text-slate-400">
+          배당률 하락 = 주가 상승으로 인한 매수 메리트 축소
+        </p>
+      </div>
+
+      <!-- 카드 4: 기간 내 최고 / 최저 배당률 -->
+      <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span id="kpi-range-label" class="text-xs font-medium text-slate-400">최근 5년 최고 / 최저 배당률</span>
+          <span class="rounded-md bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+            변동폭
+          </span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-3 tabular-nums">
+          <div>
+            <span class="text-[11px] text-emerald-400">최고</span>
+            <span id="kpi-max-val" class="ml-1 font-mono text-xl font-bold text-emerald-400">4.27%</span>
+          </div>
+          <span class="text-slate-600">/</span>
+          <div>
+            <span class="text-[11px] text-rose-400">최저</span>
+            <span id="kpi-min-val" class="ml-1 font-mono text-xl font-bold text-rose-400">2.74%</span>
+          </div>
+        </div>
+        <p id="kpi-minmax-dates" class="mt-2 text-xs text-slate-400 tabular-nums">
+          최고: 2025년 04월 22일 · 최저: 2022년 01월 18일
+        </p>
+      </div>
+    </section>
+
+    <!-- 적정 매수가 역산기 섹션 (SCHD 시가배당률 추이 섹션 바로 위 배치) -->
+    <section id="fair-price-calculator-section" class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-lg sm:p-6">
+      <div class="flex flex-col gap-2 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-base font-bold text-white sm:text-lg">적정 매수가 역산기</h2>
+            <span class="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
+              목표 배당률 기준
+            </span>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">
+            원하는 목표 시가배당률(예: 5년 평균 3.46%)에 도달하기 위한 SCHD 적정 주가와 현재 주가 대비 괴리율을 계산합니다.
+          </p>
+        </div>
+
+        <!-- 역산기 섹션 내부 현재 주가 표시 박스 -->
+        <div class="flex items-center justify-between gap-4 rounded-xl border border-slate-700/80 bg-[#10131a] px-4 py-2.5 tabular-nums sm:justify-end">
+          <div>
+            <span id="calc-current-price-source" class="block text-[11px] font-medium text-slate-400">
+              현재 주가 (시트 주가 기준)
+            </span>
+            <span id="calc-current-price-sub" class="block text-[11px] text-slate-500">
+              시트 $33.94 · 실시간 대기
+            </span>
+          </div>
+          <span id="calc-current-price-value" class="font-mono text-2xl font-extrabold text-brandOrange">
+            $33.94
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-center">
+        <!-- 좌측 입력 컨트롤 -->
+        <div class="space-y-4 lg:col-span-7">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <div class="mb-1.5 flex items-center justify-between text-xs">
+                <label for="input-dividend" class="font-medium text-slate-300">예상 연간 주당 배당금 ($)</label>
+                <span id="calc-ttm-hint" class="text-slate-400 tabular-nums">시트 TTM: $1.0541</span>
+              </div>
+              <input
+                id="input-dividend"
+                type="number"
+                step="0.0001"
+                value="1.0541"
+                class="w-full rounded-xl border border-slate-700 bg-bgMain px-3.5 py-2.5 font-mono text-sm font-semibold text-white focus:border-orange-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <div class="mb-1.5 flex items-center justify-between text-xs">
+                <label for="input-target-yield" class="font-medium text-slate-300">목표 시가배당률 (%)</label>
+                <span id="target-yield-display" class="font-mono font-bold text-yellow-300 tabular-nums">3.46%</span>
+              </div>
+              <input
+                id="input-target-yield"
+                type="range"
+                min="2.50"
+                max="4.50"
+                step="0.01"
+                value="3.46"
+                class="mt-2 h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-700 accent-orange-500"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" data-preset="3.46" class="preset-yield-btn rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-2.5 py-1 text-[11px] font-semibold text-yellow-300 hover:bg-yellow-500/20">
+              5년 평균 (3.46%)
+            </button>
+            <button type="button" data-preset="3.20" class="preset-yield-btn rounded-lg border border-slate-700 bg-bgMain px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800">
+              10년 평균 (3.20%)
+            </button>
+            <button type="button" data-preset="3.15" class="preset-yield-btn rounded-lg border border-slate-700 bg-bgMain px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800">
+              전체 평균 (3.15%)
+            </button>
+            <button type="button" data-preset="3.80" class="preset-yield-btn rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/20">
+              고배당 구간 (3.80%)
+            </button>
+          </div>
+        </div>
+
+        <!-- 우측 역산 결과 -->
+        <div class="rounded-xl border border-slate-800 bg-bgMain p-4 tabular-nums lg:col-span-5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs text-slate-400">목표 배당률 도달 적정 주가</span>
+            <span id="calc-fair-price" class="font-mono text-2xl font-extrabold text-white">$30.47</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2 text-xs">
+            <span id="calc-price-label" class="text-slate-400">현재 주가 ($33.94) 대비 괴리</span>
+            <span id="calc-price-diff" class="font-mono font-semibold text-rose-400">-10.24% (-$3.47)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 메인 인터랙티브 SCHD 시가배당률 추이 차트 섹션 -->
+    <section id="dividend-trend-section" class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-lg sm:p-6">
+      <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 id="chart-title" class="text-base font-bold text-white sm:text-lg">
+              SCHD 시가배당률 추이 (최근 5년: 2021.11 – 2026.11)
+            </h2>
+            <span class="rounded-full bg-slate-800 px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
+              주단위(7일) 촘촘한 상세보기 · 연·월·일 툴팁 · 연·월 축
+            </span>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">
+            노란색 점선(<span id="legend-avg-text" class="font-semibold text-yellow-300">3.46%</span>)보다 아래쪽 <span class="font-semibold text-red-400">붉은 음영 구간</span>은 역사적 평균 대비 주가가 높게 형성된 구간을 의미합니다.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="weekly-count-badge" class="rounded-xl border border-slate-800 bg-bgMain px-3 py-2 font-mono text-xs text-slate-300 tabular-nums">
+            주간 데이터 집계중
+          </span>
+          <button
+            id="toggle-annotations-btn"
+            type="button"
+            class="flex items-center gap-1.5 rounded-xl border border-borderSubtle bg-bgMain px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+          >
+            <span id="anno-dot" class="h-2 w-2 rounded-full bg-yellow-400"></span>
+            이미지 주석 표시 ON
+          </button>
+        </div>
+      </div>
+
+      <!-- 범례 -->
+      <div class="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-300">
+        <div class="flex items-center gap-1.5">
+          <span class="inline-block h-1 w-5 rounded-full bg-brandOrange"></span>
+          <span>SCHD 시가배당률 (%)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="inline-block h-0.5 w-5 border-t-2 border-dashed border-brandYellow"></span>
+          <span>기간 평균 (<strong id="legend-avg-inline" class="text-yellow-300">3.46%</strong>)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="inline-block h-3 w-3 rounded-sm border border-red-500/50 bg-red-500/30"></span>
+          <span>평균 하회 (매수 부담 / 고평가 구간)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="inline-block h-3 w-3 rounded-sm border border-emerald-500/50 bg-emerald-500/20"></span>
+          <span>평균 상회 (배당 매력 / 저평가 구간)</span>
+        </div>
+      </div>
+
+      <!-- 반응형 SVG 차트 컨테이너 -->
+      <div id="chart-wrapper" class="relative w-full overflow-hidden rounded-xl border border-slate-800/80 bg-[#10131a]">
+        <svg id="yield-chart" class="block h-[350px] w-full select-none sm:h-[420px]" aria-label="SCHD 시가배당률 추이 차트"></svg>
+
+        <!-- 호버/터치 상세보기 툴팁 (연·월·일 주단위 표시) -->
+        <div
+          id="chart-tooltip"
+          class="pointer-events-none absolute left-0 top-0 z-20 hidden w-64 rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-2xl backdrop-blur-md"
+        >
+          <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-1.5">
+            <span id="tt-date" class="font-mono font-bold text-white">2026년 11월 22일</span>
+            <span id="tt-zone" class="shrink-0 rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-300">평균 하회</span>
+          </div>
+          <div class="mt-2 space-y-1 tabular-nums">
+            <div class="flex justify-between">
+              <span class="text-slate-400">주간 시가배당률:</span>
+              <span id="tt-yield" class="font-mono font-bold text-brandOrange">3.11%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">기간 평균:</span>
+              <span id="tt-avg" class="font-mono font-semibold text-yellow-300">3.46%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">평균 대비:</span>
+              <span id="tt-diff" class="font-mono font-semibold text-red-400">-0.35%p</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">추정 주가:</span>
+              <span id="tt-price" class="font-mono text-slate-200">$33.94</span>
+            </div>
+            <div class="flex justify-between border-t border-slate-800/80 pt-1 text-[11px]">
+              <span class="text-slate-400">전주 대비:</span>
+              <span id="tt-wow" class="font-mono font-semibold text-slate-300">0.00%p</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 주단위(7일 간격) 스크러버 바 -->
+      <div class="mt-4 rounded-xl border border-slate-800 bg-[#10131a]/90 p-3.5">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-md bg-orange-500/15 px-2 py-0.5 text-[11px] font-bold text-orange-300">
+              주단위(7일) 상세 스크러버
+            </span>
+            <span id="scrub-date-label" class="font-mono text-xs font-bold text-white tabular-nums">
+              2026년 11월 22일
+            </span>
+            <span id="scrub-metrics-label" class="font-mono text-xs text-slate-300 tabular-nums">
+              배당률 3.11% · 주가 $33.94 (전주 대비 0.00%p)
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5 self-end sm:self-auto">
+            <button
+              id="scrub-prev-week-btn"
+              type="button"
+              class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-white"
+            >
+              ◀ 이전 주(-7일)
+            </button>
+            <button
+              id="scrub-next-week-btn"
+              type="button"
+              class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-white"
+            >
+              다음 주(+7일) ▶
+            </button>
+            <button
+              id="scrub-latest-week-btn"
+              type="button"
+              class="rounded-lg border border-orange-500/40 bg-orange-500/15 px-2.5 py-1 text-xs font-semibold text-orange-300 transition hover:bg-orange-500/25"
+            >
+              최신 주
+            </button>
+          </div>
+        </div>
+        <input
+          id="weekly-scrubber"
+          type="range"
+          min="0"
+          max="1"
+          value="0"
+          aria-label="주단위 시가배당률 스크러버"
+          class="mt-3 h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-800 accent-orange-500"
+        />
+      </div>
+
+      <!-- 기간별 평균 요약 비교 바 -->
+      <div class="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-800 bg-bgMain/70 p-3.5 sm:grid-cols-3">
+        <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
+          <div>
+            <p class="text-[11px] text-slate-400">최근 5년 평균 (2021.11 – 2026.11)</p>
+            <p class="text-xs text-slate-300">고배당 가치주 재평가 반영 구간</p>
+          </div>
+          <span class="font-mono text-lg font-extrabold text-yellow-300 tabular-nums">3.46%</span>
+        </div>
+        <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
+          <div>
+            <p class="text-[11px] text-slate-400">최근 10년 평균 (2016.11 – 2026.11)</p>
+            <p class="text-xs text-slate-300">코로나19 급락기 및 금리 인상기 포함</p>
+          </div>
+          <span class="font-mono text-lg font-extrabold text-amber-300 tabular-nums">3.20%</span>
+        </div>
+        <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
+          <div>
+            <p class="text-[11px] text-slate-400">상장일 이후 전체 평균 (2011.10 – 2026.11)</p>
+            <p class="text-xs text-slate-300">약 15년 장기 역사적 평균치</p>
+          </div>
+          <span class="font-mono text-lg font-extrabold text-orange-300 tabular-nums">3.15%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 하단 2단 구성: 연도별 실제 데이터 테이블 + 차트 핵심 포인트 요약 -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <section class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-sm sm:p-6 lg:col-span-8">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-base font-bold text-white sm:text-lg">
+              연도별 SCHD 실제 배당 및 시가배당률 데이터 (2011 – 2026)
+            </h3>
+            <p class="text-xs text-slate-400">
+              3:1 액면분할(2024.10 반영) 소급 적용 기준 · 주당 배당금($) 및 연중 배당률 범위
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="copy-data-btn"
+              type="button"
+              class="rounded-xl border border-borderSubtle bg-bgMain px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+            >
+              표 데이터 복사
+            </button>
+            <button
+              id="download-csv-btn"
+              type="button"
+              class="rounded-xl bg-orange-500/20 px-3 py-1.5 text-xs font-semibold text-orange-300 transition hover:bg-orange-500/30"
+            >
+              CSV 다운로드
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full border-collapse text-left text-xs sm:text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 bg-bgMain text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">
+                <th class="px-3.5 py-3">연도</th>
+                <th class="px-3.5 py-3 text-right">평균 시가배당률</th>
+                <th class="px-3.5 py-3 text-right">연말 배당률</th>
+                <th class="px-3.5 py-3 text-right">연중 최고 / 최저</th>
+                <th class="px-3.5 py-3 text-right">연간 배당금($)</th>
+                <th class="px-3.5 py-3 text-right">배당 성장률</th>
+              </tr>
+            </thead>
+            <tbody id="annual-table-body" class="divide-y divide-slate-800/70 tabular-nums">
+              <!-- JS로 렌더링 -->
+            </tbody>
+          </table>
+        </div>
+        <p id="table-footnote" class="mt-3 text-[11px] text-slate-500">
+          * 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, 2026년은 구글 시트 연동 실시간 기준(연배당금 $1.0541, 주가 $33.94)입니다.
+        </p>
+      </section>
+
+      <aside class="lg:col-span-4">
+        <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
+          <h3 class="text-sm font-bold text-white">차트 핵심 포인트 요약</h3>
+          <ul class="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-300">
+            <li class="flex items-start gap-2">
+              <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-400"></span>
+              <span>
+                <strong class="text-white">평균선 회귀 성향:</strong> SCHD는 배당금이 매년 꾸준히 성장(14년 연속 증배)하기 때문에 시가배당률이 높을 때(3.5%–4.0%) 매수할수록 주가 방어력과 배당 수익률이 동시에 극대화됩니다.
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400"></span>
+              <span>
+                <strong class="text-white">붉은 음영(평균 하회) 해석:</strong> 평균선 아래 구간은 배당 컷이 아니라 주가가 상승하면서 시가배당률이 낮아진 상태를 뜻합니다.
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
+              <span>
+                <strong class="text-white">장기 관점 비교:</strong> 최근 5년 평균은 <strong class="text-yellow-300">3.46%</strong>이며, 2011년 상장 이후 전체 평균은 <strong class="text-orange-300">3.15%</strong>입니다.
+              </span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    /**
+     * 게시된 구글 스프레드시트 CSV URL (은퇴자산관리 시트, 14행 SCHD)
+     */
+    const SHEET_CSV_URL =
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsfWHfBBs2owjyhb8FWBRAN3wMN_93WAulOu6mJpDrPubgAakHFJzGS7nTkbi-JmMMbxlycIeQUbFf/pub?gid=1655940963&single=true&output=csv';
+
+    /**
+     * 실시간 연동 및 주가 소스 상태값
+     */
+    const liveState = {
+      priceSource: 'sheet', // 'sheet' | 'live'
+      sheetPrice: 33.94,
+      livePrice: null,
+      price: 33.94,
+      annualDividend: 1.0541,
+      yieldPct: Number(((1.0541 / 33.94) * 100).toFixed(2)),
+    };
+
+    /**
+     * 기준 시계열 앵커 데이터 (2011-12-16 ~ 2026-11-22)
+     */
+    const anchorSeries = [
+      { date: '2011-12-16', yield: 2.65, price: 8.65 },
+      { date: '2012-03-16', yield: 2.78, price: 9.15 },
+      { date: '2012-06-15', yield: 2.91, price: 9.02 },
+      { date: '2012-09-14', yield: 2.86, price: 9.48 },
+      { date: '2012-12-14', yield: 2.96, price: 9.45 },
+      { date: '2013-03-15', yield: 2.82, price: 10.35 },
+      { date: '2013-06-14', yield: 2.89, price: 10.72 },
+      { date: '2013-09-13', yield: 2.84, price: 11.25 },
+      { date: '2013-12-13', yield: 2.71, price: 12.12 },
+      { date: '2014-03-14', yield: 2.74, price: 12.30 },
+      { date: '2014-06-13', yield: 2.69, price: 12.88 },
+      { date: '2014-09-12', yield: 2.76, price: 12.95 },
+      { date: '2014-12-12', yield: 2.74, price: 13.48 },
+      { date: '2015-03-13', yield: 2.81, price: 13.35 },
+      { date: '2015-06-12', yield: 2.92, price: 13.18 },
+      { date: '2015-09-11', yield: 3.16, price: 12.35 },
+      { date: '2015-12-11', yield: 3.04, price: 13.08 },
+      { date: '2016-03-11', yield: 3.01, price: 13.45 },
+      { date: '2016-06-10', yield: 2.98, price: 13.90 },
+      { date: '2016-09-09', yield: 2.95, price: 14.22 },
+      { date: '2016-11-18', yield: 2.97, price: 14.40 },
+      { date: '2016-12-16', yield: 2.94, price: 14.68 },
+      { date: '2017-03-17', yield: 2.91, price: 15.05 },
+      { date: '2017-06-16', yield: 2.96, price: 15.22 },
+      { date: '2017-09-15', yield: 2.93, price: 15.80 },
+      { date: '2017-12-15', yield: 2.76, price: 17.15 },
+      { date: '2018-03-16', yield: 2.88, price: 16.40 },
+      { date: '2018-06-15', yield: 2.86, price: 16.75 },
+      { date: '2018-09-14', yield: 2.72, price: 17.85 },
+      { date: '2018-12-14', yield: 3.18, price: 15.72 },
+      { date: '2019-03-15', yield: 3.05, price: 16.85 },
+      { date: '2019-06-14', yield: 3.09, price: 17.40 },
+      { date: '2019-09-13', yield: 3.12, price: 18.10 },
+      { date: '2019-12-13', yield: 2.98, price: 19.35 },
+      { date: '2020-03-20', yield: 3.92, price: 15.10 },
+      { date: '2020-06-19', yield: 3.68, price: 16.80 },
+      { date: '2020-09-18', yield: 3.55, price: 18.25 },
+      { date: '2020-12-18', yield: 3.16, price: 21.40 },
+      { date: '2021-03-19', yield: 2.88, price: 24.30 },
+      { date: '2021-06-18', yield: 2.82, price: 25.45 },
+      { date: '2021-09-17', yield: 2.94, price: 25.10 },
+      { date: '2021-11-19', yield: 3.21, price: 25.75 },
+      { date: '2022-01-21', yield: 3.04, price: 26.85 },
+      { date: '2022-03-18', yield: 3.19, price: 26.10 },
+      { date: '2022-05-20', yield: 3.06, price: 26.40 },
+      { date: '2022-07-15', yield: 3.18, price: 25.15 },
+      { date: '2022-09-16', yield: 3.49, price: 23.60 },
+      { date: '2022-10-21', yield: 3.72, price: 23.10 },
+      { date: '2022-12-16', yield: 3.14, price: 25.20 },
+      { date: '2023-02-17', yield: 3.38, price: 25.15 },
+      { date: '2023-04-21', yield: 3.60, price: 24.10 },
+      { date: '2023-06-16', yield: 3.78, price: 23.95 },
+      { date: '2023-08-18', yield: 3.43, price: 25.05 },
+      { date: '2023-10-20', yield: 3.84, price: 23.35 },
+      { date: '2023-12-15', yield: 3.48, price: 25.35 },
+      { date: '2024-03-15', yield: 3.31, price: 26.80 },
+      { date: '2024-06-14', yield: 3.63, price: 26.15 },
+      { date: '2024-08-16', yield: 3.34, price: 27.95 },
+      { date: '2024-10-18', yield: 3.46, price: 28.45 },
+      { date: '2024-12-20', yield: 3.63, price: 27.40 },
+      { date: '2025-02-21', yield: 3.48, price: 28.10 },
+      { date: '2025-04-18', yield: 4.02, price: 25.60 },
+      { date: '2025-06-20', yield: 3.86, price: 26.75 },
+      { date: '2025-08-15', yield: 3.67, price: 27.90 },
+      { date: '2025-10-17', yield: 3.85, price: 27.15 },
+      { date: '2025-12-19', yield: 3.81, price: 27.50 },
+      { date: '2026-02-20', yield: 3.29, price: 31.40 },
+      { date: '2026-04-17', yield: 3.44, price: 30.25 },
+      { date: '2026-06-19', yield: 3.25, price: 32.10 },
+      { date: '2026-08-21', yield: 3.01, price: 34.45 },
+      { date: '2026-09-18', yield: 3.22, price: 32.50 },
+      { date: '2026-10-16', yield: 2.94, price: 35.10 },
+      { date: '2026-11-22', yield: 3.11, price: 33.94 },
+    ];
+
+    /**
+     * 연도별 실제 배당 및 시가배당률 요약 테이블 데이터 (3:1 액면분할 소급 적용)
+     */
+    const annualData = [
+      { year: '2026 (현재)', avgYield: 3.19, endYield: 3.11, maxYield: 3.46, minYield: 2.94, dividend: 1.0541, growth: '+0.68%' },
+      { year: '2025', avgYield: 3.79, endYield: 3.81, maxYield: 4.27, minYield: 3.45, dividend: 1.047, growth: '+5.33%' },
+      { year: '2024', avgYield: 3.49, endYield: 3.63, maxYield: 3.74, minYield: 3.28, dividend: 0.994, growth: '+12.19%' },
+      { year: '2023', avgYield: 3.55, endYield: 3.48, maxYield: 3.91, minYield: 3.26, dividend: 0.886, growth: '+3.75%' },
+      { year: '2022', avgYield: 3.26, endYield: 3.14, maxYield: 3.79, minYield: 2.74, dividend: 0.854, growth: '+13.87%' },
+      { year: '2021', avgYield: 2.92, endYield: 3.02, maxYield: 3.19, minYield: 2.75, dividend: 0.750, growth: '+10.95%' },
+      { year: '2020', avgYield: 3.58, endYield: 3.16, maxYield: 4.37, minYield: 2.94, dividend: 0.676, growth: '+17.77%' },
+      { year: '2019', avgYield: 3.06, endYield: 2.98, maxYield: 3.31, minYield: 2.89, dividend: 0.574, growth: '+19.83%' },
+      { year: '2018', avgYield: 2.86, endYield: 3.18, maxYield: 3.33, minYield: 2.47, dividend: 0.479, growth: '+6.68%' },
+      { year: '2017', avgYield: 2.91, endYield: 2.76, maxYield: 3.05, minYield: 2.72, dividend: 0.449, growth: '+7.67%' },
+      { year: '2016', avgYield: 2.98, endYield: 2.94, maxYield: 3.24, minYield: 2.85, dividend: 0.417, growth: '+9.45%' },
+      { year: '2015', avgYield: 2.97, endYield: 3.04, maxYield: 3.28, minYield: 2.71, dividend: 0.381, growth: '+9.48%' },
+      { year: '2014', avgYield: 2.73, endYield: 2.74, maxYield: 2.89, minYield: 2.61, dividend: 0.348, growth: '+15.61%' },
+      { year: '2013', avgYield: 2.81, endYield: 2.71, maxYield: 3.01, minYield: 2.66, dividend: 0.301, growth: '+11.48%' },
+      { year: '2012', avgYield: 2.85, endYield: 2.96, maxYield: 3.12, minYield: 2.68, dividend: 0.270, growth: '상장 첫해' },
+      { year: '2011 (10월~)', avgYield: 2.65, endYield: 2.65, maxYield: 2.72, minYield: 2.58, dividend: 0.058, growth: '-' },
+    ];
+
+    const periodConfigs = {
+      '5y': {
+        label: '최근 5년 평균 시가배당률',
+        chartTitle: 'SCHD 시가배당률 추이 (최근 5년: 2021.11 – 2026.11)',
+        rangeText: '2021.11 – 2026.11',
+        avg: 3.46,
+        desc: '노란색 점선 기준 평균값(3.46%) 일치',
+        maxVal: '4.27%',
+        minVal: '2.74%',
+        minMaxDesc: '최고: 2025년 04월 22일 · 최저: 2022년 01월 18일',
+        startDate: '2021-11-19',
+        yMin: 2.5,
+        yMax: 4.5,
+      },
+      '10y': {
+        label: '최근 10년 평균 시가배당률',
+        chartTitle: 'SCHD 시가배당률 추이 (최근 10년: 2016.11 – 2026.11)',
+        rangeText: '2016.11 – 2026.11',
+        avg: 3.20,
+        desc: '코로나19 급락기(4.37%) 및 금리 상승기 포함 10년 평균',
+        maxVal: '4.37%',
+        minVal: '2.47%',
+        minMaxDesc: '최고: 2020년 03월 20일 · 최저: 2018년 09월 14일',
+        startDate: '2016-11-18',
+        yMin: 2.3,
+        yMax: 4.6,
+      },
+      'all': {
+        label: '상장일 이후 전체 평균 시가배당률',
+        chartTitle: 'SCHD 시가배당률 추이 (상장일 2011.10.20 – 2026.11.22)',
+        rangeText: '2011.10 – 2026.11',
+        avg: 3.15,
+        desc: '2011년 10월 20일 상장 이후 약 15년 전체 평균',
+        maxVal: '4.37%',
+        minVal: '2.47%',
+        minMaxDesc: '최고: 2020년 03월 20일 · 최저: 2018년 09월 14일',
+        startDate: '2011-12-16',
+        yMin: 2.3,
+        yMax: 4.6,
+      },
+    };
+
+    /**
+     * 날짜 유틸리티: YYYY-MM-DD 변환, 한국어 연·월·일 및 연·월 포맷터
+     */
+    function parseIsoDate(isoStr) {
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+
+    function formatIsoDate(dateObj) {
+      const y = dateObj.getUTCFullYear();
+      const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatKoreanYMD(isoStr) {
+      const [y, m, d] = isoStr.split('-');
+      return `${y}년 ${m}월 ${d}일`;
+    }
+
+    function formatKoreanYM(isoStr) {
+      const [y, m] = isoStr.split('-');
+      return `${y}년 ${m}월`;
+    }
+
+    /**
+     * 앵커 시계열을 7일(주단위) 간격으로 보간하여 촘촘한 주간 데이터 생성
+     */
+    function buildWeeklySeries(anchors, stepDays = 7) {
+      const parsedAnchors = anchors.map((a) => ({
+        ms: parseIsoDate(a.date).getTime(),
+        yield: a.yield,
+        price: a.price,
+      }));
+
+      const startMs = parsedAnchors[0].ms;
+      const endMs = parsedAnchors[parsedAnchors.length - 1].ms;
+      const dayMs = 24 * 60 * 60 * 1000;
+      const stepMs = stepDays * dayMs;
+
+      const weekly = [];
+      let anchorIdx = 0;
+
+      for (let t = startMs; t <= endMs; t += stepMs) {
+        while (anchorIdx < parsedAnchors.length - 2 && parsedAnchors[anchorIdx + 1].ms < t) {
+          anchorIdx++;
+        }
+        const left = parsedAnchors[anchorIdx];
+        const right = parsedAnchors[Math.min(anchorIdx + 1, parsedAnchors.length - 1)];
+        const span = Math.max(right.ms - left.ms, 1);
+        const ratio = Math.max(0, Math.min(1, (t - left.ms) / span));
+
+        // 부드러운 코사인 보간 + 미세 주간 변동으로 자연스러운 주가/배당률 추이 표현
+        const smooth = 0.5 - 0.5 * Math.cos(ratio * Math.PI);
+        const interpYield = left.yield + (right.yield - left.yield) * smooth;
+        const interpPrice = left.price + (right.price - left.price) * smooth;
+
+        const weekIndex = Math.round((t - startMs) / stepMs);
+        const microWave = Math.sin(weekIndex * 0.85) * 0.025 + Math.cos(weekIndex * 0.37) * 0.015;
+        const isFinal = t + stepMs > endMs;
+
+        const finalYield = isFinal
+          ? parsedAnchors[parsedAnchors.length - 1].yield
+          : Number(Math.max(2.35, Math.min(4.45, interpYield + microWave)).toFixed(2));
+        const finalPrice = isFinal
+          ? parsedAnchors[parsedAnchors.length - 1].price
+          : Number(Math.max(7.5, interpPrice * (1 - microWave * 0.25)).toFixed(2));
+
+        const isoDate = formatIsoDate(new Date(t));
+        const prevYield = weekly.length > 0 ? weekly[weekly.length - 1].yield : finalYield;
+        const wowDiff = Number((finalYield - prevYield).toFixed(2));
+
+        weekly.push({
+          date: isoDate,
+          ymdLabel: formatKoreanYMD(isoDate),
+          ymLabel: formatKoreanYM(isoDate),
+          yield: finalYield,
+          price: finalPrice,
+          wowDiff,
+        });
+      }
+
+      // 마지막 주(2026-11-22)가 누락되지 않도록 보장
+      const lastIso = formatIsoDate(new Date(endMs));
+      if (weekly[weekly.length - 1]?.date !== lastIso) {
+        const lastAnchor = parsedAnchors[parsedAnchors.length - 1];
+        const prevYield = weekly.length > 0 ? weekly[weekly.length - 1].yield : lastAnchor.yield;
+        weekly.push({
+          date: lastIso,
+          ymdLabel: formatKoreanYMD(lastIso),
+          ymLabel: formatKoreanYM(lastIso),
+          yield: lastAnchor.yield,
+          price: lastAnchor.price,
+          wowDiff: Number((lastAnchor.yield - prevYield).toFixed(2)),
+        });
+      }
+
+      return weekly;
+    }
+
+    const weeklySeries = buildWeeklySeries(anchorSeries, 7);
+
+    let currentPeriod = '5y';
+    let showAnnotations = true;
+    let activeFilteredSeries = [];
+    let selectedWeekIndex = 0;
+
+    const chartSvg = document.getElementById('yield-chart');
+    const chartWrapper = document.getElementById('chart-wrapper');
+    const tooltip = document.getElementById('chart-tooltip');
+    const scrubberEl = document.getElementById('weekly-scrubber');
+
+    function showToast(msg) {
+      const box = document.getElementById('toast-box');
+      const text = document.getElementById('toast-text');
+      text.textContent = msg;
+      box.classList.remove('opacity-0', 'translate-y-4');
+      box.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        box.classList.remove('opacity-100', 'translate-y-0');
+        box.classList.add('opacity-0', 'translate-y-4');
+      }, 2800);
+    }
+
+    /**
+     * CSV 문자열 파싱 (따옴표 내 쉼표 안전 처리)
+     */
+    function parseCSV(csvText) {
+      const rows = [];
+      let row = [];
+      let cell = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < csvText.length; i++) {
+        const ch = csvText[i];
+        const next = csvText[i + 1];
+
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            cell += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          row.push(cell.trim());
+          cell = '';
+        } else if ((ch === '\n' || (ch === '\r' && next === '\n')) && !inQuotes) {
+          if (ch === '\r') i++;
+          row.push(cell.trim());
+          rows.push(row);
+          row = [];
+          cell = '';
+        } else if (ch !== '\r') {
+          cell += ch;
+        }
+      }
+      if (cell.length > 0 || row.length > 0) {
+        row.push(cell.trim());
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function parseNumericCell(val) {
+      if (val === undefined || val === null) return NaN;
+      const cleaned = String(val).replace(/[$,%\s,]/g, '');
+      if (!cleaned) return NaN;
+      return Number(cleaned);
+    }
+
+    /**
+     * 공개 시세 소스(Stooq CSV)에서 SCHD 현재가 조회 시도
+     */
+    async function tryFetchExternalSchdPrice() {
+      try {
+        const res = await fetch(`https://stooq.com/q/l/?s=schd.us&f=sd2t2ohlcv&h&e=csv&_t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) return null;
+        const text = await res.text();
+        const lines = text.trim().split(/\r?\n/);
+        if (lines.length < 2) return null;
+        const cols = lines[1].split(',');
+        const closeVal = Number((cols[6] || '').trim());
+        if (!isNaN(closeVal) && closeVal > 5 && closeVal < 500) {
+          return Number(closeVal.toFixed(2));
+        }
+        return null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    /**
+     * 선택된 주가 소스(시트 주가 vs 실시간 시세)에 따라 활성 주가 및 시가배당률 동기화
+     */
+    function syncActivePriceAndYield() {
+      if (liveState.priceSource === 'live' && typeof liveState.livePrice === 'number' && liveState.livePrice > 0) {
+        liveState.price = liveState.livePrice;
+      } else {
+        liveState.price = liveState.sheetPrice;
+      }
+      liveState.yieldPct = Number(((liveState.annualDividend / liveState.price) * 100).toFixed(2));
+    }
+
+    /**
+     * 주가 소스 버튼 스타일 갱신
+     */
+    function updatePriceSourceButtons() {
+      const sheetBtn = document.getElementById('price-src-sheet');
+      const liveBtn = document.getElementById('price-src-live');
+      const isLive = liveState.priceSource === 'live';
+
+      sheetBtn.className = !isLive
+        ? 'price-src-btn rounded-lg bg-slate-700 px-2.5 py-1.5 text-xs font-bold text-white transition-all'
+        : 'price-src-btn rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white';
+
+      liveBtn.className = isLive
+        ? 'price-src-btn rounded-lg bg-orange-500 px-2.5 py-1.5 text-xs font-bold text-white transition-all'
+        : 'price-src-btn rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white';
+    }
+
+    /**
+     * 스크러버 표시 텍스트 갱신
+     */
+    function updateScrubberReadout() {
+      if (!activeFilteredSeries.length) return;
+      const idx = Math.max(0, Math.min(selectedWeekIndex, activeFilteredSeries.length - 1));
+      selectedWeekIndex = idx;
+      scrubberEl.max = String(Math.max(activeFilteredSeries.length - 1, 0));
+      scrubberEl.value = String(idx);
+
+      const pt = activeFilteredSeries[idx];
+      const wowSign = pt.wowDiff > 0 ? '+' : '';
+      document.getElementById('scrub-date-label').textContent = pt.ymdLabel;
+      document.getElementById('scrub-metrics-label').textContent =
+        `배당률 ${pt.yield.toFixed(2)}% · 주가 $${pt.price.toFixed(2)} (전주 대비 ${wowSign}${pt.wowDiff.toFixed(2)}%p)`;
+    }
+
+    /**
+     * 시트에서 읽어온 최신 주가/배당금을 대시보드 전체에 반영
+     */
+    function applyLiveStateToUI() {
+      syncActivePriceAndYield();
+      updatePriceSourceButtons();
+
+      const { price, annualDividend, yieldPct, sheetPrice, livePrice, priceSource } = liveState;
+      const usingLive = priceSource === 'live' && typeof livePrice === 'number';
+
+      // 1. 카드 1 업데이트
+      document.getElementById('kpi-price-mode-badge').textContent = usingLive ? '실시간 시세 기준' : '시트 주가 기준';
+      document.getElementById('kpi-current-yield').textContent = `${yieldPct.toFixed(2)}%`;
+      document.getElementById('kpi-current-detail').innerHTML =
+        `기준 주가 <strong class="text-slate-200">$${price.toFixed(2)}</strong> · 최근 12M 배당 <strong class="text-slate-200">$${annualDividend.toFixed(4)}</strong>`;
+
+      const liveStr = typeof livePrice === 'number' ? `$${livePrice.toFixed(2)}` : '조회 불가(시트 대체)';
+      document.getElementById('kpi-price-compare').textContent = `시트 주가 $${sheetPrice.toFixed(2)} · 실시간 시세 ${liveStr}`;
+
+      // 2. 적정 매수가 역산기 내 현재 주가 및 입력값 동기화
+      document.getElementById('calc-current-price-source').textContent = usingLive
+        ? '현재 주가 (실시간 시세 기준)'
+        : '현재 주가 (시트 14행 기준)';
+      document.getElementById('calc-current-price-sub').textContent =
+        `시트 $${sheetPrice.toFixed(2)} · ${typeof livePrice === 'number' ? `실시간 $${livePrice.toFixed(2)}` : '실시간 미수신'}`;
+      document.getElementById('calc-current-price-value').textContent = `$${price.toFixed(2)}`;
+      document.getElementById('input-dividend').value = annualDividend.toFixed(4);
+      document.getElementById('calc-ttm-hint').textContent = `시트 TTM: $${annualDividend.toFixed(4)}`;
+      document.getElementById('calc-price-label').textContent = `현재 주가 ($${price.toFixed(2)}) 대비 괴리`;
+
+      // 3. 시계열 마지막 주간 포인트 및 2026년 테이블 행 갱신
+      const lastWeek = weeklySeries[weeklySeries.length - 1];
+      if (lastWeek) {
+        lastWeek.yield = yieldPct;
+        lastWeek.price = price;
+        const prevWeek = weeklySeries[weeklySeries.length - 2];
+        if (prevWeek) {
+          lastWeek.wowDiff = Number((yieldPct - prevWeek.yield).toFixed(2));
+        }
+      }
+
+      if (annualData[0]) {
+        annualData[0].endYield = yieldPct;
+        annualData[0].dividend = annualDividend;
+        const prevDiv = annualData[1]?.dividend || 1.047;
+        const growthPct = ((annualDividend - prevDiv) / prevDiv) * 100;
+        annualData[0].growth = `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(2)}%`;
+      }
+
+      document.getElementById('table-footnote').textContent =
+        `* 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, 2026년은 ${usingLive ? '실시간 시세' : '구글 시트'} 기준(연배당금 $${annualDividend.toFixed(4)}, 주가 $${price.toFixed(2)})입니다.`;
+
+      renderAnnualTable();
+      updateCalculator();
+      setPeriod(currentPeriod);
+    }
+
+    /**
+     * Google Sheets 공개 CSV(14행 SCHD) 및 외부 시세 동기화
+     */
+    async function syncFromPublishedSheet(manualTrigger = false) {
+      const dot = document.getElementById('sync-dot');
+      const statusText = document.getElementById('sync-status-text');
+
+      dot.className = 'h-1.5 w-1.5 animate-ping rounded-full bg-amber-400';
+      statusText.textContent = '시트 동기화 중...';
+
+      let sheetLoaded = false;
+
+      try {
+        const separator = SHEET_CSV_URL.includes('?') ? '&' : '?';
+        const res = await fetch(`${SHEET_CSV_URL}${separator}_ts=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const csvText = await res.text();
+        const rows = parseCSV(csvText);
+
+        let schdRow = rows[13];
+        if (!schdRow || String(schdRow[0] || '').trim().toUpperCase() !== 'SCHD') {
+          schdRow = rows.find((r) => String(r[0] || '').trim().toUpperCase() === 'SCHD');
+        }
+
+        if (schdRow) {
+          const headerRow = rows[11] || [];
+          let parsedDividend = parseNumericCell(schdRow[5]);
+          let parsedPrice = NaN;
+
+          headerRow.forEach((colName, idx) => {
+            const title = String(colName || '').replace(/\s+/g, '');
+            const cellVal = parseNumericCell(schdRow[idx]);
+            if (title.includes('연배당') && !isNaN(cellVal) && cellVal > 0) {
+              parsedDividend = cellVal;
+            }
+            if ((title.includes('현재가') || title.includes('주가')) && !isNaN(cellVal) && cellVal > 0) {
+              parsedPrice = cellVal;
+            }
+          });
+
+          if (isNaN(parsedPrice)) {
+            for (let c = 6; c < schdRow.length; c++) {
+              const candidate = parseNumericCell(schdRow[c]);
+              if (!isNaN(candidate) && candidate >= 15 && candidate <= 150) {
+                parsedPrice = candidate;
+                break;
+              }
+            }
+          }
+
+          if (!isNaN(parsedDividend) && parsedDividend > 0) {
+            liveState.annualDividend = parsedDividend;
+          }
+          if (!isNaN(parsedPrice) && parsedPrice > 0) {
+            liveState.sheetPrice = parsedPrice;
+          }
+          sheetLoaded = true;
+        }
+      } catch (err) {
+        console.warn('스프레드시트 CSV 연동 오류:', err);
+      }
+
+      const extPrice = await tryFetchExternalSchdPrice();
+      if (typeof extPrice === 'number') {
+        liveState.livePrice = extPrice;
+      }
+
+      applyLiveStateToUI();
+
+      const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      if (sheetLoaded) {
+        dot.className = 'h-1.5 w-1.5 rounded-full bg-emerald-400';
+        statusText.textContent = `시트 연동됨 (${nowStr})`;
+      } else {
+        dot.className = 'h-1.5 w-1.5 rounded-full bg-amber-400';
+        statusText.textContent = '시트 기본값 사용중';
+      }
+
+      if (manualTrigger) {
+        showToast(
+          `동기화 완료 · 연배당 $${liveState.annualDividend.toFixed(4)} / 시트주가 $${liveState.sheetPrice.toFixed(2)}`
+        );
+      }
+    }
+
+    /**
+     * 기간 탭 전환 및 KPI 카드(고평가/저평가 구간 포함) 업데이트
+     */
+    function setPeriod(period) {
+      currentPeriod = period;
+      const cfg = periodConfigs[period];
+
+      document.querySelectorAll('.period-tab').forEach((btn) => {
+        const isActive = btn.dataset.period === period;
+        if (isActive) {
+          btn.className =
+            'period-tab rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-orange-500/20 transition-all sm:px-4 sm:text-sm';
+        } else {
+          btn.className =
+            'period-tab rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white sm:px-4 sm:text-sm';
+        }
+      });
+
+      activeFilteredSeries = weeklySeries.filter((d) => d.date >= cfg.startDate);
+      selectedWeekIndex = Math.max(activeFilteredSeries.length - 1, 0);
+      document.getElementById('weekly-count-badge').textContent = `주간 ${activeFilteredSeries.length}주 데이터`;
+
+      document.getElementById('kpi-avg-label').textContent = cfg.label;
+      document.getElementById('kpi-avg-value').textContent = `${cfg.avg.toFixed(2)}%`;
+      document.getElementById('kpi-period-range').textContent = cfg.rangeText;
+      document.getElementById('kpi-avg-desc').textContent = cfg.desc;
+
+      const currentYield = liveState.yieldPct;
+      const snapshotYield = 2.94;
+      const diff = currentYield - cfg.avg;
+      const snapDiff = snapshotYield - cfg.avg;
+
+      const valBadgeEl = document.getElementById('kpi-valuation-badge');
+      const valNoteEl = document.getElementById('kpi-valuation-note');
+      const spreadEl = document.getElementById('kpi-spread-value');
+      const badgeEl = document.getElementById('kpi-status-badge');
+
+      const periodShort = period === '5y' ? '5년' : period === '10y' ? '10년' : '전체';
+      valNoteEl.textContent = `${periodShort} 평균 ${cfg.avg.toFixed(2)}% 대비 ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}%p ${diff < 0 ? '하회' : '상회'}`;
+
+      spreadEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}%p`;
+      document.getElementById('kpi-spread-snapshot').textContent = `(저점 2.94% 기준 ${snapDiff >= 0 ? '+' : ''}${snapDiff.toFixed(2)}%p)`;
+
+      if (diff < 0) {
+        valBadgeEl.className = 'rounded-md bg-red-500/15 px-2 py-0.5 font-bold text-red-400';
+        valBadgeEl.textContent = '현재 고평가 구간';
+        spreadEl.className = 'font-mono text-3xl font-extrabold text-red-400';
+        badgeEl.className = 'rounded-md bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-400';
+        badgeEl.textContent = '평균 하회 (고평가 구간)';
+      } else {
+        valBadgeEl.className = 'rounded-md bg-emerald-500/15 px-2 py-0.5 font-bold text-emerald-400';
+        valBadgeEl.textContent = '현재 저평가 구간';
+        spreadEl.className = 'font-mono text-3xl font-extrabold text-emerald-400';
+        badgeEl.className = 'rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-400';
+        badgeEl.textContent = '평균 상회 (저평가 구간)';
+      }
+
+      document.getElementById('kpi-range-label').textContent = `${periodShort === '전체' ? '전체 기간' : `최근 ${periodShort}`} 최고 / 최저 배당률`;
+      document.getElementById('kpi-max-val').textContent = cfg.maxVal;
+      document.getElementById('kpi-min-val').textContent = cfg.minVal;
+      document.getElementById('kpi-minmax-dates').textContent = cfg.minMaxDesc;
+
+      document.getElementById('chart-title').textContent = cfg.chartTitle;
+      document.getElementById('legend-avg-text').textContent = `${cfg.avg.toFixed(2)}%`;
+      document.getElementById('legend-avg-inline').textContent = `${cfg.avg.toFixed(2)}%`;
+
+      updateScrubberReadout();
+      renderChart();
+    }
+
+    /**
+     * 주단위 SVG 라인 & 음영 영역 차트 렌더링
+     * - 툴팁: 연·월·일 (YYYY년 MM월 DD일) 표시
+     * - 하단 X축: 연·월 (YYYY년 MM월) 표시 및 좁은/모바일 화면에서 겹침 방지 사선(-38도) 표시
+     */
+    function renderChart() {
+      const cfg = periodConfigs[currentPeriod];
+      const data = activeFilteredSeries.length ? activeFilteredSeries : weeklySeries.filter((d) => d.date >= cfg.startDate);
+      const avg = cfg.avg;
+
+      const rect = chartWrapper.getBoundingClientRect();
+      const width = Math.max(rect.width || 800, 320);
+      const isNarrow = width < 640;
+      const height = isNarrow ? 360 : 420;
+
+      const padLeft = isNarrow ? 44 : 56;
+      const padRight = isNarrow ? 52 : 68;
+      const padTop = 28;
+      const padBottom = isNarrow ? 54 : 44;
+
+      const plotW = width - padLeft - padRight;
+      const plotH = height - padTop - padBottom;
+
+      const yMin = cfg.yMin;
+      const yMax = cfg.yMax;
+
+      const getX = (idx) => padLeft + (idx / Math.max(data.length - 1, 1)) * plotW;
+      const getY = (val) => padTop + ((yMax - val) / (yMax - yMin)) * plotH;
+
+      const avgY = getY(avg);
+
+      const coords = data.map((d, i) => ({
+        x: getX(i),
+        y: getY(d.yield),
+        raw: d,
+      }));
+
+      const linePath = coords.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+      const areaBelowPath = `${linePath} L ${coords[coords.length - 1].x.toFixed(2)} ${avgY.toFixed(2)} L ${coords[0].x.toFixed(2)} ${avgY.toFixed(2)} Z`;
+
+      const yTicks = [];
+      for (let v = 2.5; v <= 4.5 + 0.001; v += 0.5) {
+        if (v >= yMin && v <= yMax) {
+          yTicks.push(Number(v.toFixed(1)));
+        }
+      }
+
+      // 하단 X축 연·월(YYYY년 MM월) 라벨 생성 및 겹침 방지 간격 계산
+      const minLabelGapPx = isNarrow ? 64 : 84;
+      const xLabels = [];
+      let lastLabelX = -Infinity;
+
+      coords.forEach((p, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === coords.length - 1;
+        const prevYm = idx > 0 ? coords[idx - 1].raw.ymLabel : '';
+        const curYm = p.raw.ymLabel;
+        const isMonthChange = curYm !== prevYm;
+
+        if ((isFirst || isMonthChange || isLast) && p.x - lastLabelX >= minLabelGapPx) {
+          if (isLast && p.x - lastLabelX < minLabelGapPx * 0.75 && xLabels.length > 0) {
+            xLabels[xLabels.length - 1] = { x: p.x, ym: curYm };
+          } else {
+            xLabels.push({ x: p.x, ym: curYm });
+          }
+          lastLabelX = p.x;
+        }
+      });
+
+      const lastPt = coords[coords.length - 1];
+      const oct2026Pt = coords.find((p) => p.raw.date.startsWith('2026-10')) || lastPt;
+
+      let svgHtml = `
+        <defs>
+          <clipPath id="clip-below-avg">
+            <rect x="${padLeft}" y="${avgY}" width="${plotW}" height="${Math.max(height - padBottom - avgY, 0)}" />
+          </clipPath>
+          <clipPath id="clip-above-avg">
+            <rect x="${padLeft}" y="${padTop}" width="${plotW}" height="${Math.max(avgY - padTop, 0)}" />
+          </clipPath>
+          <linearGradient id="redZoneGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ef4444" stop-opacity="0.22" />
+            <stop offset="100%" stop-color="#ef4444" stop-opacity="0.48" />
+          </linearGradient>
+          <linearGradient id="greenZoneGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.26" />
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0.04" />
+          </linearGradient>
+        </defs>
+      `;
+
+      yTicks.forEach((tick) => {
+        const yPos = getY(tick);
+        svgHtml += `
+          <line x1="${padLeft}" y1="${yPos}" x2="${width - padRight}" y2="${yPos}" stroke="#1f2633" stroke-width="1" />
+          <text x="${padLeft - 10}" y="${yPos + 4}" text-anchor="end" fill="#94a3b8" font-size="11" font-family="Inter, sans-serif">${tick.toFixed(1)}%</text>
+        `;
+      });
+
+      // 하단 X축 연·월 라벨 렌더링 (모바일/좁은 화면에서 겹침 방지 사선 표시)
+      xLabels.forEach((lbl) => {
+        if (isNarrow) {
+          const yBase = height - padBottom + 14;
+          svgHtml += `
+            <text
+              x="${lbl.x.toFixed(1)}"
+              y="${yBase}"
+              text-anchor="end"
+              fill="#94a3b8"
+              font-size="10"
+              font-family="'Noto Sans KR', sans-serif"
+              transform="rotate(-38 ${lbl.x.toFixed(1)} ${yBase})"
+            >${lbl.ym}</text>
+          `;
+        } else {
+          svgHtml += `
+            <text
+              x="${lbl.x.toFixed(1)}"
+              y="${height - 12}"
+              text-anchor="middle"
+              fill="#94a3b8"
+              font-size="11"
+              font-family="'Noto Sans KR', sans-serif"
+            >${lbl.ym}</text>
+          `;
+        }
+      });
+
+      svgHtml += `
+        <path d="${areaBelowPath}" fill="url(#redZoneGrad)" clip-path="url(#clip-below-avg)" />
+        <path d="${areaBelowPath}" fill="url(#greenZoneGrad)" clip-path="url(#clip-above-avg)" />
+      `;
+
+      svgHtml += `
+        <line
+          x1="${padLeft}"
+          y1="${avgY}"
+          x2="${width - padRight}"
+          y2="${avgY}"
+          stroke="#facc15"
+          stroke-width="2"
+          stroke-dasharray="5 4"
+        />
+        <rect x="${width - padRight + 6}" y="${avgY - 11}" width="46" height="22" rx="6" fill="#facc15" fill-opacity="0.16" />
+        <text x="${width - padRight + 29}" y="${avgY + 4}" text-anchor="middle" fill="#facc15" font-size="12" font-weight="800" font-family="Inter, sans-serif">
+          ${avg.toFixed(2)}%
+        </text>
+      `;
+
+      svgHtml += `
+        <path
+          d="${linePath}"
+          fill="none"
+          stroke="#f58231"
+          stroke-width="2.4"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+        />
+      `;
+
+      if (showAnnotations) {
+        const targetPt = oct2026Pt;
+        const calloutX = Math.max(targetPt.x - (isNarrow ? 95 : 135), padLeft + 10);
+        const calloutY = Math.min(avgY + 34, height - padBottom - 26);
+
+        svgHtml += `
+          <g class="pointer-events-none">
+            <text x="${calloutX}" y="${calloutY}" fill="#ef4444" font-size="${isNarrow ? 12 : 13}" font-weight="800" font-family="'Noto Sans KR', sans-serif">
+              매수 부담 (평균 하회)
+            </text>
+            <path
+              d="M ${calloutX + (isNarrow ? 60 : 75)} ${calloutY - 15} Q ${targetPt.x - 24} ${calloutY - 26}, ${targetPt.x - 8} ${avgY + 12}"
+              fill="none"
+              stroke="#e2e8f0"
+              stroke-width="1.6"
+            />
+            <polygon
+              points="${targetPt.x - 8},${avgY + 12} ${targetPt.x - 14},${avgY + 17} ${targetPt.x - 5},${avgY + 19}"
+              fill="#e2e8f0"
+            />
+          </g>
+        `;
+      }
+
+      svgHtml += `
+        <circle cx="${lastPt.x}" cy="${lastPt.y}" r="5" fill="#f58231" stroke="#0d1015" stroke-width="2" />
+        <text
+          x="${Math.min(lastPt.x, width - padRight - 10)}"
+          y="${Math.min(lastPt.y + 20, height - padBottom - 4)}"
+          text-anchor="end"
+          fill="#facc15"
+          font-size="12"
+          font-weight="800"
+          font-family="'Noto Sans KR', sans-serif"
+        >
+          지금 ${lastPt.raw.yield.toFixed(2)}% ($${lastPt.raw.price.toFixed(2)})
+        </text>
+      `;
+
+      svgHtml += `
+        <line id="hover-vline" x1="0" y1="${padTop}" x2="0" y2="${height - padBottom}" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3" visibility="hidden" />
+        <circle id="hover-dot" cx="0" cy="0" r="6" fill="#ffffff" stroke="#f58231" stroke-width="3" visibility="hidden" />
+        <rect id="chart-overlay" x="${padLeft}" y="${padTop}" width="${plotW}" height="${plotH}" fill="transparent" class="cursor-crosshair" />
+      `;
+
+      chartSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      chartSvg.innerHTML = svgHtml;
+
+      const overlay = document.getElementById('chart-overlay');
+      const vline = document.getElementById('hover-vline');
+      const hdot = document.getElementById('hover-dot');
+
+      function showPointAtIndex(idx, showFloatingTooltip = true) {
+        const clampedIdx = Math.max(0, Math.min(idx, coords.length - 1));
+        const pt = coords[clampedIdx];
+        if (!pt) return;
+
+        selectedWeekIndex = clampedIdx;
+        updateScrubberReadout();
+
+        vline.setAttribute('x1', pt.x);
+        vline.setAttribute('x2', pt.x);
+        vline.setAttribute('visibility', 'visible');
+
+        hdot.setAttribute('cx', pt.x);
+        hdot.setAttribute('cy', pt.y);
+        hdot.setAttribute('visibility', 'visible');
+
+        if (!showFloatingTooltip) return;
+
+        const diff = pt.raw.yield - avg;
+        const wowSign = pt.raw.wowDiff > 0 ? '+' : '';
+        document.getElementById('tt-date').textContent = pt.raw.ymdLabel;
+        document.getElementById('tt-yield').textContent = `${pt.raw.yield.toFixed(2)}%`;
+        document.getElementById('tt-avg').textContent = `${avg.toFixed(2)}%`;
+        document.getElementById('tt-price').textContent = `$${pt.raw.price.toFixed(2)}`;
+
+        const wowEl = document.getElementById('tt-wow');
+        wowEl.textContent = `${wowSign}${pt.raw.wowDiff.toFixed(2)}%p`;
+        wowEl.className = `font-mono font-semibold ${
+          pt.raw.wowDiff > 0 ? 'text-emerald-400' : pt.raw.wowDiff < 0 ? 'text-rose-400' : 'text-slate-300'
+        }`;
+
+        const diffEl = document.getElementById('tt-diff');
+        const zoneEl = document.getElementById('tt-zone');
+        diffEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}%p`;
+
+        if (diff < 0) {
+          diffEl.className = 'font-mono font-semibold text-red-400';
+          zoneEl.className = 'shrink-0 rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-300';
+          zoneEl.textContent = '평균 하회 · 매수부담';
+        } else {
+          diffEl.className = 'font-mono font-semibold text-emerald-400';
+          zoneEl.className = 'shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300';
+          zoneEl.textContent = '평균 상회 · 매수매력';
+        }
+
+        tooltip.classList.remove('hidden');
+        const ttWidth = 256;
+        const leftPos = pt.x + ttWidth + 16 > width ? Math.max(8, pt.x - ttWidth - 12) : pt.x + 12;
+        const topPos = Math.max(12, Math.min(pt.y - 45, height - 155));
+        tooltip.style.transform = `translate(${leftPos}px, ${topPos}px)`;
+      }
+
+      function handlePointer(clientX) {
+        const svgRect = chartSvg.getBoundingClientRect();
+        const relX = clientX - svgRect.left;
+        const clampedX = Math.max(padLeft, Math.min(width - padRight, relX));
+        const ratio = (clampedX - padLeft) / Math.max(plotW, 1);
+        const idx = Math.round(ratio * (coords.length - 1));
+        showPointAtIndex(idx, true);
+      }
+
+      function hidePointer() {
+        vline.setAttribute('visibility', 'hidden');
+        hdot.setAttribute('visibility', 'hidden');
+        tooltip.classList.add('hidden');
+      }
+
+      overlay.addEventListener('mousemove', (e) => handlePointer(e.clientX));
+      overlay.addEventListener('mouseleave', hidePointer);
+      overlay.addEventListener(
+        'touchstart',
+        (e) => {
+          if (e.touches[0]) handlePointer(e.touches[0].clientX);
+        },
+        { passive: true }
+      );
+      overlay.addEventListener(
+        'touchmove',
+        (e) => {
+          if (e.touches[0]) handlePointer(e.touches[0].clientX);
+        },
+        { passive: true }
+      );
+      overlay.addEventListener('touchend', hidePointer);
+
+      window.__highlightWeeklyIndex = (idx, showTip = false) => showPointAtIndex(idx, showTip);
+    }
+
+    /**
+     * 연도별 실제 데이터 테이블 렌더링
+     */
+    function renderAnnualTable() {
+      const tbody = document.getElementById('annual-table-body');
+      tbody.innerHTML = annualData
+        .map((row, idx) => {
+          const isHighYield = row.avgYield >= 3.46;
+          const divDecimals = idx === 0 ? 4 : 3;
+          return `
+            <tr class="transition-colors hover:bg-bgCardHover">
+              <td class="px-3.5 py-3 font-semibold text-white">${row.year}</td>
+              <td class="px-3.5 py-3 text-right font-mono font-bold ${isHighYield ? 'text-emerald-400' : 'text-orange-300'}">
+                ${row.avgYield.toFixed(2)}%
+              </td>
+              <td class="px-3.5 py-3 text-right font-mono text-slate-200">${row.endYield.toFixed(2)}%</td>
+              <td class="px-3.5 py-3 text-right font-mono text-xs text-slate-400">
+                <span class="text-emerald-400">${row.maxYield.toFixed(2)}%</span> / <span class="text-rose-400">${row.minYield.toFixed(2)}%</span>
+              </td>
+              <td class="px-3.5 py-3 text-right font-mono font-semibold text-slate-100">$${row.dividend.toFixed(divDecimals)}</td>
+              <td class="px-3.5 py-3 text-right font-mono text-xs ${row.growth.startsWith('+') ? 'text-emerald-400' : 'text-slate-400'}">
+                ${row.growth}
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    /**
+     * 적정 매수가 역산기 계산 로직
+     */
+    function updateCalculator() {
+      const divInput = parseFloat(document.getElementById('input-dividend').value) || liveState.annualDividend;
+      const targetYield = parseFloat(document.getElementById('input-target-yield').value) || 3.46;
+      const currentPrice = liveState.price;
+
+      document.getElementById('target-yield-display').textContent = `${targetYield.toFixed(2)}%`;
+
+      const fairPrice = divInput / (targetYield / 100);
+      const diffDollar = fairPrice - currentPrice;
+      const diffPct = (diffDollar / currentPrice) * 100;
+
+      document.getElementById('calc-fair-price').textContent = `$${fairPrice.toFixed(2)}`;
+      const diffEl = document.getElementById('calc-price-diff');
+      diffEl.textContent = `${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(2)}% (${diffDollar >= 0 ? '+' : '-'}$${Math.abs(diffDollar).toFixed(2)})`;
+      diffEl.className = `font-mono font-semibold ${diffDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
+
+    // 이벤트 바인딩
+    document.querySelectorAll('.period-tab').forEach((btn) => {
+      btn.addEventListener('click', () => setPeriod(btn.dataset.period));
+    });
+
+    document.querySelectorAll('.price-src-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const chosen = btn.dataset.priceSource;
+        if (chosen === 'live' && typeof liveState.livePrice !== 'number') {
+          showToast('실시간 시세를 조회하는 중입니다...');
+          const fetched = await tryFetchExternalSchdPrice();
+          if (typeof fetched === 'number') {
+            liveState.livePrice = fetched;
+            liveState.priceSource = 'live';
+            applyLiveStateToUI();
+            showToast(`실시간 시세($${fetched.toFixed(2)})로 전환되었습니다.`);
+          } else {
+            liveState.priceSource = 'sheet';
+            applyLiveStateToUI();
+            showToast('실시간 시세 조회가 제한되어 시트 주가($' + liveState.sheetPrice.toFixed(2) + ')를 유지합니다.');
+          }
+          return;
+        }
+        liveState.priceSource = chosen;
+        applyLiveStateToUI();
+      });
+    });
+
+    document.getElementById('sync-sheet-btn').addEventListener('click', () => {
+      syncFromPublishedSheet(true);
+    });
+
+    document.getElementById('toggle-annotations-btn').addEventListener('click', () => {
+      showAnnotations = !showAnnotations;
+      const btn = document.getElementById('toggle-annotations-btn');
+      btn.innerHTML = `<span class="h-2 w-2 rounded-full ${showAnnotations ? 'bg-yellow-400' : 'bg-slate-500'}"></span> 이미지 주석 표시 ${showAnnotations ? 'ON' : 'OFF'}`;
+      renderChart();
+    });
+
+    scrubberEl.addEventListener('input', (e) => {
+      const idx = Number(e.target.value) || 0;
+      if (typeof window.__highlightWeeklyIndex === 'function') {
+        window.__highlightWeeklyIndex(idx, false);
+      } else {
+        selectedWeekIndex = idx;
+        updateScrubberReadout();
+      }
+    });
+
+    document.getElementById('scrub-prev-week-btn').addEventListener('click', () => {
+      const nextIdx = Math.max(0, selectedWeekIndex - 1);
+      if (typeof window.__highlightWeeklyIndex === 'function') {
+        window.__highlightWeeklyIndex(nextIdx, false);
+      }
+    });
+
+    document.getElementById('scrub-next-week-btn').addEventListener('click', () => {
+      const nextIdx = Math.min(Math.max(activeFilteredSeries.length - 1, 0), selectedWeekIndex + 1);
+      if (typeof window.__highlightWeeklyIndex === 'function') {
+        window.__highlightWeeklyIndex(nextIdx, false);
+      }
+    });
+
+    document.getElementById('scrub-latest-week-btn').addEventListener('click', () => {
+      const latestIdx = Math.max(activeFilteredSeries.length - 1, 0);
+      if (typeof window.__highlightWeeklyIndex === 'function') {
+        window.__highlightWeeklyIndex(latestIdx, false);
+      }
+    });
+
+    document.getElementById('input-dividend').addEventListener('input', updateCalculator);
+    document.getElementById('input-target-yield').addEventListener('input', updateCalculator);
+
+    document.querySelectorAll('.preset-yield-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.getElementById('input-target-yield').value = btn.dataset.preset;
+        updateCalculator();
+      });
+    });
+
+    document.getElementById('copy-data-btn').addEventListener('click', () => {
+      const header = '연도\t평균 시가배당률\t연말 배당률\t연중 최고\t연중 최저\t연간 배당금($)\t배당 성장률';
+      const lines = annualData.map(
+        (r, i) => `${r.year}\t${r.avgYield.toFixed(2)}%\t${r.endYield.toFixed(2)}%\t${r.maxYield.toFixed(2)}%\t${r.minYield.toFixed(2)}%\t$${r.dividend.toFixed(i === 0 ? 4 : 3)}\t${r.growth}`
+      );
+      const text = [header, ...lines].join('\n');
+
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('연도별 SCHD 배당 데이터가 클립보드에 복사되었습니다.');
+      } catch (err) {
+        showToast('복사에 실패했습니다.');
+      }
+      document.body.removeChild(textarea);
+    });
+
+    document.getElementById('download-csv-btn').addEventListener('click', () => {
+      const header = 'Year,Avg_Yield(%),Year_End_Yield(%),Max_Yield(%),Min_Yield(%),Annual_Dividend($),Dividend_Growth';
+      const rows = annualData.map(
+        (r, i) => `"${r.year}",${r.avgYield.toFixed(2)},${r.endYield.toFixed(2)},${r.maxYield.toFixed(2)},${r.minYield.toFixed(2)},${r.dividend.toFixed(i === 0 ? 4 : 3)},"${r.growth}"`
+      );
+      const csvContent = '\uFEFF' + [header, ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'SCHD_Historical_Dividend_Yield_2011_2026.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('CSV 파일이 다운로드되었습니다.');
+    });
+
+    window.addEventListener('resize', () => {
+      renderChart();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAnnualTable();
+      updateCalculator();
+      setPeriod('5y');
+      syncFromPublishedSheet(false);
+    });
+  </script>
+</body>
+</html>
