@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script>
-    // Tailwind 다크 모드 및 커스텀 디자인 토큰 설정
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -33,7 +32,6 @@
     };
   </script>
   <style>
-    /* 기본 배경 및 스크롤바 스타일링 */
     body {
       background-color: #0d1015;
       color: #f1f5f9;
@@ -59,7 +57,6 @@
   </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-orange-500/30 selection:text-orange-200">
-  <!-- 상단 고정 헤더: 브랜드, 시트 동기화 버튼, 주가 소스 토글, 기간 탭 -->
   <header class="sticky top-0 z-30 border-b border-borderSubtle bg-bgMain/90 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <div class="flex items-center gap-3">
@@ -78,7 +75,7 @@
               id="sync-sheet-btn"
               type="button"
               title="클릭하여 구글 스프레드시트 및 주가 다시 불러오기"
-              class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/20"
+              class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-60"
             >
               <span id="sync-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
               <span id="sync-status-text">시트 연동 대기중</span>
@@ -90,7 +87,6 @@
         </div>
       </div>
 
-      <!-- 주가 소스 선택 토글 + 조회 기간 선택 탭 -->
       <div class="flex flex-wrap items-center gap-2">
         <div class="flex items-center rounded-xl border border-borderSubtle bg-bgCard p-1" role="group" aria-label="주가 기준 선택">
           <button
@@ -142,7 +138,6 @@
   </header>
 
   <main class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
-    <!-- 알림 토스트 박스 (alert() 대체용) -->
     <div id="toast-box" class="pointer-events-none fixed bottom-5 right-5 z-50 translate-y-4 opacity-0 transition-all duration-300">
       <div class="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/95 px-4 py-3 text-sm font-medium text-white shadow-2xl">
         <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
@@ -150,9 +145,7 @@
       </div>
     </div>
 
-    <!-- 핵심 요약 KPI 카드 4종 -->
     <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <!-- 카드 1: 현재 시가배당률 + 현재 고평가/저평가 구간 표시 -->
       <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-slate-400">현재 시가배당률 (시트 연동)</span>
@@ -180,7 +173,6 @@
         </p>
       </div>
 
-      <!-- 카드 2: 선택 기간 평균 시가배당률 -->
       <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <span id="kpi-avg-label" class="text-xs font-medium text-slate-400">최근 5년 평균 시가배당률</span>
@@ -197,7 +189,6 @@
         </p>
       </div>
 
-      <!-- 카드 3: 평균 대비 현재 괴리 -->
       <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-slate-400">평균 대비 현재 괴리</span>
@@ -214,7 +205,6 @@
         </p>
       </div>
 
-      <!-- 카드 4: 기간 내 최고 / 최저 배당률 -->
       <div class="rounded-2xl border border-borderSubtle bg-bgCard p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <span id="kpi-range-label" class="text-xs font-medium text-slate-400">최근 5년 최고 / 최저 배당률</span>
@@ -239,7 +229,6 @@
       </div>
     </section>
 
-    <!-- 적정 매수가 역산기 섹션 (SCHD 시가배당률 추이 섹션 바로 위 배치) -->
     <section id="fair-price-calculator-section" class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-lg sm:p-6">
       <div class="flex flex-col gap-2 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -254,7 +243,6 @@
           </p>
         </div>
 
-        <!-- 역산기 섹션 내부 현재 주가 표시 박스 -->
         <div class="flex items-center justify-between gap-4 rounded-xl border border-slate-700/80 bg-[#10131a] px-4 py-2.5 tabular-nums sm:justify-end">
           <div>
             <span id="calc-current-price-source" class="block text-[11px] font-medium text-slate-400">
@@ -271,7 +259,6 @@
       </div>
 
       <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-center">
-        <!-- 좌측 입력 컨트롤 -->
         <div class="space-y-4 lg:col-span-7">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -321,7 +308,6 @@
           </div>
         </div>
 
-        <!-- 우측 역산 결과 -->
         <div class="rounded-xl border border-slate-800 bg-bgMain p-4 tabular-nums lg:col-span-5">
           <div class="flex items-center justify-between gap-2">
             <span class="text-xs text-slate-400">목표 배당률 도달 적정 주가</span>
@@ -335,7 +321,6 @@
       </div>
     </section>
 
-    <!-- 메인 인터랙티브 SCHD 시가배당률 추이 차트 섹션 -->
     <section id="dividend-trend-section" class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-lg sm:p-6">
       <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -367,7 +352,6 @@
         </div>
       </div>
 
-      <!-- 범례 -->
       <div class="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-300">
         <div class="flex items-center gap-1.5">
           <span class="inline-block h-1 w-5 rounded-full bg-brandOrange"></span>
@@ -387,11 +371,9 @@
         </div>
       </div>
 
-      <!-- 반응형 SVG 차트 컨테이너 -->
       <div id="chart-wrapper" class="relative w-full overflow-hidden rounded-xl border border-slate-800/80 bg-[#10131a]">
         <svg id="yield-chart" class="block h-[350px] w-full select-none sm:h-[420px]" aria-label="SCHD 시가배당률 추이 차트"></svg>
 
-        <!-- 호버/터치 상세보기 툴팁 (연·월·일 주단위 표시) -->
         <div
           id="chart-tooltip"
           class="pointer-events-none absolute left-0 top-0 z-20 hidden w-64 rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-2xl backdrop-blur-md"
@@ -425,7 +407,6 @@
         </div>
       </div>
 
-      <!-- 주단위(7일 간격) 스크러버 바 -->
       <div class="mt-4 rounded-xl border border-slate-800 bg-[#10131a]/90 p-3.5">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex flex-wrap items-center gap-2">
@@ -474,7 +455,6 @@
         />
       </div>
 
-      <!-- 기간별 평균 요약 비교 바 -->
       <div class="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-800 bg-bgMain/70 p-3.5 sm:grid-cols-3">
         <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
           <div>
@@ -500,7 +480,6 @@
       </div>
     </section>
 
-    <!-- 하단 2단 구성: 연도별 실제 데이터 테이블 + 차트 핵심 포인트 요약 -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
       <section class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-sm sm:p-6 lg:col-span-8">
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -542,9 +521,7 @@
                 <th class="px-3.5 py-3 text-right">배당 성장률</th>
               </tr>
             </thead>
-            <tbody id="annual-table-body" class="divide-y divide-slate-800/70 tabular-nums">
-              <!-- JS로 렌더링 -->
-            </tbody>
+            <tbody id="annual-table-body" class="divide-y divide-slate-800/70 tabular-nums"></tbody>
           </table>
         </div>
         <p id="table-footnote" class="mt-3 text-[11px] text-slate-500">
@@ -581,27 +558,20 @@
   </main>
 
   <script>
-    /**
-     * 게시된 구글 스프레드시트 CSV URL (은퇴자산관리 시트, 14행 SCHD)
-     */
     const SHEET_CSV_URL =
       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsfWHfBBs2owjyhb8FWBRAN3wMN_93WAulOu6mJpDrPubgAakHFJzGS7nTkbi-JmMMbxlycIeQUbFf/pub?gid=1655940963&single=true&output=csv';
+    const CACHE_KEY = 'schd_sheet_cache_v1';
 
-    /**
-     * 실시간 연동 및 주가 소스 상태값
-     */
     const liveState = {
-      priceSource: 'sheet', // 'sheet' | 'live'
+      priceSource: 'sheet',
       sheetPrice: 33.94,
       livePrice: null,
       price: 33.94,
       annualDividend: 1.0541,
       yieldPct: Number(((1.0541 / 33.94) * 100).toFixed(2)),
+      isSyncing: false,
     };
 
-    /**
-     * 기준 시계열 앵커 데이터 (2011-12-16 ~ 2026-11-22)
-     */
     const anchorSeries = [
       { date: '2011-12-16', yield: 2.65, price: 8.65 },
       { date: '2012-03-16', yield: 2.78, price: 9.15 },
@@ -678,9 +648,6 @@
       { date: '2026-11-22', yield: 3.11, price: 33.94 },
     ];
 
-    /**
-     * 연도별 실제 배당 및 시가배당률 요약 테이블 데이터 (3:1 액면분할 소급 적용)
-     */
     const annualData = [
       { year: '2026 (현재)', avgYield: 3.19, endYield: 3.11, maxYield: 3.46, minYield: 2.94, dividend: 1.0541, growth: '+0.68%' },
       { year: '2025', avgYield: 3.79, endYield: 3.81, maxYield: 4.27, minYield: 3.45, dividend: 1.047, growth: '+5.33%' },
@@ -742,9 +709,6 @@
       },
     };
 
-    /**
-     * 날짜 유틸리티: YYYY-MM-DD 변환, 한국어 연·월·일 및 연·월 포맷터
-     */
     function parseIsoDate(isoStr) {
       const [y, m, d] = isoStr.split('-').map(Number);
       return new Date(Date.UTC(y, m - 1, d));
@@ -767,9 +731,6 @@
       return `${y}년 ${m}월`;
     }
 
-    /**
-     * 앵커 시계열을 7일(주단위) 간격으로 보간하여 촘촘한 주간 데이터 생성
-     */
     function buildWeeklySeries(anchors, stepDays = 7) {
       const parsedAnchors = anchors.map((a) => ({
         ms: parseIsoDate(a.date).getTime(),
@@ -779,8 +740,7 @@
 
       const startMs = parsedAnchors[0].ms;
       const endMs = parsedAnchors[parsedAnchors.length - 1].ms;
-      const dayMs = 24 * 60 * 60 * 1000;
-      const stepMs = stepDays * dayMs;
+      const stepMs = stepDays * 24 * 60 * 60 * 1000;
 
       const weekly = [];
       let anchorIdx = 0;
@@ -794,7 +754,6 @@
         const span = Math.max(right.ms - left.ms, 1);
         const ratio = Math.max(0, Math.min(1, (t - left.ms) / span));
 
-        // 부드러운 코사인 보간 + 미세 주간 변동으로 자연스러운 주가/배당률 추이 표현
         const smooth = 0.5 - 0.5 * Math.cos(ratio * Math.PI);
         const interpYield = left.yield + (right.yield - left.yield) * smooth;
         const interpPrice = left.price + (right.price - left.price) * smooth;
@@ -824,7 +783,6 @@
         });
       }
 
-      // 마지막 주(2026-11-22)가 누락되지 않도록 보장
       const lastIso = formatIsoDate(new Date(endMs));
       if (weekly[weekly.length - 1]?.date !== lastIso) {
         const lastAnchor = parsedAnchors[parsedAnchors.length - 1];
@@ -864,12 +822,56 @@
       window.__toastTimer = setTimeout(() => {
         box.classList.remove('opacity-100', 'translate-y-0');
         box.classList.add('opacity-0', 'translate-y-4');
-      }, 2800);
+      }, 2600);
     }
 
-    /**
-     * CSV 문자열 파싱 (따옴표 내 쉼표 안전 처리)
-     */
+    async function fetchWithTimeout(url, timeoutMs = 3500) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function loadSessionCache() {
+      try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) return false;
+        const cached = JSON.parse(raw);
+        if (typeof cached.sheetPrice === 'number' && cached.sheetPrice > 0) {
+          liveState.sheetPrice = cached.sheetPrice;
+        }
+        if (typeof cached.annualDividend === 'number' && cached.annualDividend > 0) {
+          liveState.annualDividend = cached.annualDividend;
+        }
+        if (typeof cached.livePrice === 'number' && cached.livePrice > 0) {
+          liveState.livePrice = cached.livePrice;
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function saveSessionCache(syncedAtLabel) {
+      try {
+        sessionStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            sheetPrice: liveState.sheetPrice,
+            annualDividend: liveState.annualDividend,
+            livePrice: liveState.livePrice,
+            syncedAtLabel,
+          })
+        );
+      } catch (_) {}
+    }
+
     function parseCSV(csvText) {
       const rows = [];
       let row = [];
@@ -914,14 +916,63 @@
       return Number(cleaned);
     }
 
-    /**
-     * 공개 시세 소스(Stooq CSV)에서 SCHD 현재가 조회 시도
-     */
+    async function fetchSheetCsvData() {
+      const separator = SHEET_CSV_URL.includes('?') ? '&' : '?';
+      const res = await fetchWithTimeout(`${SHEET_CSV_URL}${separator}_ts=${Date.now()}`, 3500);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const csvText = await res.text();
+      const rows = parseCSV(csvText);
+
+      let schdRow = rows[13];
+      if (!schdRow || String(schdRow[0] || '').trim().toUpperCase() !== 'SCHD') {
+        schdRow = rows.find((r) => String(r[0] || '').trim().toUpperCase() === 'SCHD');
+      }
+      if (!schdRow) return false;
+
+      const headerRow = rows[11] || [];
+      let parsedDividend = parseNumericCell(schdRow[5]);
+      let parsedPrice = NaN;
+
+      headerRow.forEach((colName, idx) => {
+        const title = String(colName || '').replace(/\s+/g, '');
+        const cellVal = parseNumericCell(schdRow[idx]);
+        if (title.includes('연배당') && !isNaN(cellVal) && cellVal > 0) {
+          parsedDividend = cellVal;
+        }
+        if ((title.includes('현재가') || title.includes('주가')) && !isNaN(cellVal) && cellVal > 0) {
+          parsedPrice = cellVal;
+        }
+      });
+
+      if (isNaN(parsedPrice)) {
+        for (let c = 6; c < schdRow.length; c++) {
+          const candidate = parseNumericCell(schdRow[c]);
+          if (!isNaN(candidate) && candidate >= 15 && candidate <= 150) {
+            parsedPrice = candidate;
+            break;
+          }
+        }
+      }
+
+      let updated = false;
+      if (!isNaN(parsedDividend) && parsedDividend > 0) {
+        liveState.annualDividend = parsedDividend;
+        updated = true;
+      }
+      if (!isNaN(parsedPrice) && parsedPrice > 0) {
+        liveState.sheetPrice = parsedPrice;
+        updated = true;
+      }
+      return updated;
+    }
+
     async function tryFetchExternalSchdPrice() {
       try {
-        const res = await fetch(`https://stooq.com/q/l/?s=schd.us&f=sd2t2ohlcv&h&e=csv&_t=${Date.now()}`, {
-          cache: 'no-store',
-        });
+        const res = await fetchWithTimeout(
+          `https://stooq.com/q/l/?s=schd.us&f=sd2t2ohlcv&h&e=csv&_t=${Date.now()}`,
+          3000
+        );
         if (!res.ok) return null;
         const text = await res.text();
         const lines = text.trim().split(/\r?\n/);
@@ -937,9 +988,6 @@
       }
     }
 
-    /**
-     * 선택된 주가 소스(시트 주가 vs 실시간 시세)에 따라 활성 주가 및 시가배당률 동기화
-     */
     function syncActivePriceAndYield() {
       if (liveState.priceSource === 'live' && typeof liveState.livePrice === 'number' && liveState.livePrice > 0) {
         liveState.price = liveState.livePrice;
@@ -949,9 +997,6 @@
       liveState.yieldPct = Number(((liveState.annualDividend / liveState.price) * 100).toFixed(2));
     }
 
-    /**
-     * 주가 소스 버튼 스타일 갱신
-     */
     function updatePriceSourceButtons() {
       const sheetBtn = document.getElementById('price-src-sheet');
       const liveBtn = document.getElementById('price-src-live');
@@ -966,9 +1011,6 @@
         : 'price-src-btn rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white';
     }
 
-    /**
-     * 스크러버 표시 텍스트 갱신
-     */
     function updateScrubberReadout() {
       if (!activeFilteredSeries.length) return;
       const idx = Math.max(0, Math.min(selectedWeekIndex, activeFilteredSeries.length - 1));
@@ -983,17 +1025,13 @@
         `배당률 ${pt.yield.toFixed(2)}% · 주가 $${pt.price.toFixed(2)} (전주 대비 ${wowSign}${pt.wowDiff.toFixed(2)}%p)`;
     }
 
-    /**
-     * 시트에서 읽어온 최신 주가/배당금을 대시보드 전체에 반영
-     */
-    function applyLiveStateToUI() {
+    function applyLiveStateToUI({ rebuildTable = true, preserveScrubIndex = false } = {}) {
       syncActivePriceAndYield();
       updatePriceSourceButtons();
 
       const { price, annualDividend, yieldPct, sheetPrice, livePrice, priceSource } = liveState;
       const usingLive = priceSource === 'live' && typeof livePrice === 'number';
 
-      // 1. 카드 1 업데이트
       document.getElementById('kpi-price-mode-badge').textContent = usingLive ? '실시간 시세 기준' : '시트 주가 기준';
       document.getElementById('kpi-current-yield').textContent = `${yieldPct.toFixed(2)}%`;
       document.getElementById('kpi-current-detail').innerHTML =
@@ -1002,7 +1040,6 @@
       const liveStr = typeof livePrice === 'number' ? `$${livePrice.toFixed(2)}` : '조회 불가(시트 대체)';
       document.getElementById('kpi-price-compare').textContent = `시트 주가 $${sheetPrice.toFixed(2)} · 실시간 시세 ${liveStr}`;
 
-      // 2. 적정 매수가 역산기 내 현재 주가 및 입력값 동기화
       document.getElementById('calc-current-price-source').textContent = usingLive
         ? '현재 주가 (실시간 시세 기준)'
         : '현재 주가 (시트 14행 기준)';
@@ -1013,7 +1050,6 @@
       document.getElementById('calc-ttm-hint').textContent = `시트 TTM: $${annualDividend.toFixed(4)}`;
       document.getElementById('calc-price-label').textContent = `현재 주가 ($${price.toFixed(2)}) 대비 괴리`;
 
-      // 3. 시계열 마지막 주간 포인트 및 2026년 테이블 행 갱신
       const lastWeek = weeklySeries[weeklySeries.length - 1];
       if (lastWeek) {
         lastWeek.yield = yieldPct;
@@ -1035,91 +1071,52 @@
       document.getElementById('table-footnote').textContent =
         `* 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, 2026년은 ${usingLive ? '실시간 시세' : '구글 시트'} 기준(연배당금 $${annualDividend.toFixed(4)}, 주가 $${price.toFixed(2)})입니다.`;
 
-      renderAnnualTable();
+      if (rebuildTable) {
+        renderAnnualTable();
+      }
       updateCalculator();
-      setPeriod(currentPeriod);
+      setPeriod(currentPeriod, preserveScrubIndex);
     }
 
     /**
-     * Google Sheets 공개 CSV(14행 SCHD) 및 외부 시세 동기화
+     * 병렬 조회 + 타임아웃 + 캐시 선반영으로 시트 연동 속도 개선
      */
     async function syncFromPublishedSheet(manualTrigger = false) {
+      if (liveState.isSyncing) return;
+      liveState.isSyncing = true;
+
+      const syncBtn = document.getElementById('sync-sheet-btn');
       const dot = document.getElementById('sync-dot');
       const statusText = document.getElementById('sync-status-text');
 
+      syncBtn.disabled = true;
       dot.className = 'h-1.5 w-1.5 animate-ping rounded-full bg-amber-400';
       statusText.textContent = '시트 동기화 중...';
 
-      let sheetLoaded = false;
+      const [sheetResult, liveResult] = await Promise.allSettled([
+        fetchSheetCsvData(),
+        tryFetchExternalSchdPrice(),
+      ]);
 
-      try {
-        const separator = SHEET_CSV_URL.includes('?') ? '&' : '?';
-        const res = await fetch(`${SHEET_CSV_URL}${separator}_ts=${Date.now()}`, {
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const csvText = await res.text();
-        const rows = parseCSV(csvText);
-
-        let schdRow = rows[13];
-        if (!schdRow || String(schdRow[0] || '').trim().toUpperCase() !== 'SCHD') {
-          schdRow = rows.find((r) => String(r[0] || '').trim().toUpperCase() === 'SCHD');
-        }
-
-        if (schdRow) {
-          const headerRow = rows[11] || [];
-          let parsedDividend = parseNumericCell(schdRow[5]);
-          let parsedPrice = NaN;
-
-          headerRow.forEach((colName, idx) => {
-            const title = String(colName || '').replace(/\s+/g, '');
-            const cellVal = parseNumericCell(schdRow[idx]);
-            if (title.includes('연배당') && !isNaN(cellVal) && cellVal > 0) {
-              parsedDividend = cellVal;
-            }
-            if ((title.includes('현재가') || title.includes('주가')) && !isNaN(cellVal) && cellVal > 0) {
-              parsedPrice = cellVal;
-            }
-          });
-
-          if (isNaN(parsedPrice)) {
-            for (let c = 6; c < schdRow.length; c++) {
-              const candidate = parseNumericCell(schdRow[c]);
-              if (!isNaN(candidate) && candidate >= 15 && candidate <= 150) {
-                parsedPrice = candidate;
-                break;
-              }
-            }
-          }
-
-          if (!isNaN(parsedDividend) && parsedDividend > 0) {
-            liveState.annualDividend = parsedDividend;
-          }
-          if (!isNaN(parsedPrice) && parsedPrice > 0) {
-            liveState.sheetPrice = parsedPrice;
-          }
-          sheetLoaded = true;
-        }
-      } catch (err) {
-        console.warn('스프레드시트 CSV 연동 오류:', err);
+      const sheetLoaded = sheetResult.status === 'fulfilled' && Boolean(sheetResult.value);
+      if (liveResult.status === 'fulfilled' && typeof liveResult.value === 'number') {
+        liveState.livePrice = liveResult.value;
       }
 
-      const extPrice = await tryFetchExternalSchdPrice();
-      if (typeof extPrice === 'number') {
-        liveState.livePrice = extPrice;
-      }
-
-      applyLiveStateToUI();
+      applyLiveStateToUI({ rebuildTable: true, preserveScrubIndex: manualTrigger });
 
       const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       if (sheetLoaded) {
+        saveSessionCache(nowStr);
         dot.className = 'h-1.5 w-1.5 rounded-full bg-emerald-400';
         statusText.textContent = `시트 연동됨 (${nowStr})`;
       } else {
         dot.className = 'h-1.5 w-1.5 rounded-full bg-amber-400';
         statusText.textContent = '시트 기본값 사용중';
       }
+
+      syncBtn.disabled = false;
+      liveState.isSyncing = false;
 
       if (manualTrigger) {
         showToast(
@@ -1128,28 +1125,22 @@
       }
     }
 
-    /**
-     * 기간 탭 전환 및 KPI 카드(고평가/저평가 구간 포함) 업데이트
-     */
-    function setPeriod(period) {
+    function setPeriod(period, preserveScrubIndex = false) {
       currentPeriod = period;
       const cfg = periodConfigs[period];
 
       document.querySelectorAll('.period-tab').forEach((btn) => {
         const isActive = btn.dataset.period === period;
-        if (isActive) {
-          btn.className =
-            'period-tab rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-orange-500/20 transition-all sm:px-4 sm:text-sm';
-        } else {
-          btn.className =
-            'period-tab rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white sm:px-4 sm:text-sm';
-        }
+        btn.className = isActive
+          ? 'period-tab rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-orange-500/20 transition-all sm:px-4 sm:text-sm'
+          : 'period-tab rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white sm:px-4 sm:text-sm';
       });
 
       activeFilteredSeries = weeklySeries.filter((d) => d.date >= cfg.startDate);
-      selectedWeekIndex = Math.max(activeFilteredSeries.length - 1, 0);
-      document.getElementById('weekly-count-badge').textContent = `주간 ${activeFilteredSeries.length}주 데이터`;
+      const maxIdx = Math.max(activeFilteredSeries.length - 1, 0);
+      selectedWeekIndex = preserveScrubIndex ? Math.min(selectedWeekIndex, maxIdx) : maxIdx;
 
+      document.getElementById('weekly-count-badge').textContent = `주간 ${activeFilteredSeries.length}주 데이터`;
       document.getElementById('kpi-avg-label').textContent = cfg.label;
       document.getElementById('kpi-avg-value').textContent = `${cfg.avg.toFixed(2)}%`;
       document.getElementById('kpi-period-range').textContent = cfg.rangeText;
@@ -1198,11 +1189,6 @@
       renderChart();
     }
 
-    /**
-     * 주단위 SVG 라인 & 음영 영역 차트 렌더링
-     * - 툴팁: 연·월·일 (YYYY년 MM월 DD일) 표시
-     * - 하단 X축: 연·월 (YYYY년 MM월) 표시 및 좁은/모바일 화면에서 겹침 방지 사선(-38도) 표시
-     */
     function renderChart() {
       const cfg = periodConfigs[currentPeriod];
       const data = activeFilteredSeries.length ? activeFilteredSeries : weeklySeries.filter((d) => d.date >= cfg.startDate);
@@ -1245,7 +1231,6 @@
         }
       }
 
-      // 하단 X축 연·월(YYYY년 MM월) 라벨 생성 및 겹침 방지 간격 계산
       const minLabelGapPx = isNarrow ? 64 : 84;
       const xLabels = [];
       let lastLabelX = -Infinity;
@@ -1297,7 +1282,6 @@
         `;
       });
 
-      // 하단 X축 연·월 라벨 렌더링 (모바일/좁은 화면에서 겹침 방지 사선 표시)
       xLabels.forEach((lbl) => {
         if (isNarrow) {
           const yBase = height - padBottom + 14;
@@ -1498,9 +1482,6 @@
       window.__highlightWeeklyIndex = (idx, showTip = false) => showPointAtIndex(idx, showTip);
     }
 
-    /**
-     * 연도별 실제 데이터 테이블 렌더링
-     */
     function renderAnnualTable() {
       const tbody = document.getElementById('annual-table-body');
       tbody.innerHTML = annualData
@@ -1527,9 +1508,6 @@
         .join('');
     }
 
-    /**
-     * 적정 매수가 역산기 계산 로직
-     */
     function updateCalculator() {
       const divInput = parseFloat(document.getElementById('input-dividend').value) || liveState.annualDividend;
       const targetYield = parseFloat(document.getElementById('input-target-yield').value) || 3.46;
@@ -1547,7 +1525,6 @@
       diffEl.className = `font-mono font-semibold ${diffDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
     }
 
-    // 이벤트 바인딩
     document.querySelectorAll('.period-tab').forEach((btn) => {
       btn.addEventListener('click', () => setPeriod(btn.dataset.period));
     });
@@ -1561,17 +1538,17 @@
           if (typeof fetched === 'number') {
             liveState.livePrice = fetched;
             liveState.priceSource = 'live';
-            applyLiveStateToUI();
+            applyLiveStateToUI({ rebuildTable: false, preserveScrubIndex: true });
             showToast(`실시간 시세($${fetched.toFixed(2)})로 전환되었습니다.`);
           } else {
             liveState.priceSource = 'sheet';
-            applyLiveStateToUI();
+            applyLiveStateToUI({ rebuildTable: false, preserveScrubIndex: true });
             showToast('실시간 시세 조회가 제한되어 시트 주가($' + liveState.sheetPrice.toFixed(2) + ')를 유지합니다.');
           }
           return;
         }
         liveState.priceSource = chosen;
-        applyLiveStateToUI();
+        applyLiveStateToUI({ rebuildTable: false, preserveScrubIndex: true });
       });
     });
 
@@ -1672,9 +1649,13 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
+      const hadCache = loadSessionCache();
       renderAnnualTable();
       updateCalculator();
       setPeriod('5y');
+      if (hadCache) {
+        applyLiveStateToUI({ rebuildTable: true, preserveScrubIndex: false });
+      }
       syncFromPublishedSheet(false);
     });
   </script>
