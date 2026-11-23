@@ -68,22 +68,24 @@
             <h1 class="text-lg font-bold tracking-tight text-white sm:text-xl">
               SCHD 시가배당률 추이 &amp; 밸류에이션 분석
             </h1>
-            <span class="hidden rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-300 sm:inline-block">
-              상장일 2011.10.20 – 2026.11.22
+            <span id="header-span-badge" class="hidden rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-300 sm:inline-block">
+              상장일 2011.10.20 – 오늘
             </span>
             <button
               id="sync-sheet-btn"
               type="button"
-              title="클릭하여 구글 스프레드시트 및 주가 다시 불러오기"
+              title="클릭하여 구글 스프레드시트 및 Twelve Data 시세 다시 불러오기"
               class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-60"
             >
               <span id="sync-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              <span id="syncSpinner" class="hidden h-3 w-3 animate-spin rounded-full border-2 border-emerald-300 border-t-transparent"></span>
               <span id="sync-status-text">시트 연동 대기중</span>
             </button>
           </div>
           <p class="text-xs text-slate-400">
             Schwab U.S. Dividend Equity ETF · 역사적 시가배당률(TTM) 평균 비교 및 연도별 실제 데이터
           </p>
+          <p id="apiStatusMessage" class="mt-1 text-[11px] font-medium text-slate-400"></p>
         </div>
       </div>
 
@@ -182,7 +184,7 @@
         </div>
         <div class="mt-2 flex items-baseline gap-2 tabular-nums">
           <span id="kpi-avg-value" class="font-mono text-3xl font-extrabold text-brandYellow">3.46%</span>
-          <span id="kpi-period-range" class="text-xs text-slate-400">2021.11 – 2026.11</span>
+          <span id="kpi-period-range" class="text-xs text-slate-400">2021.11 – 오늘</span>
         </div>
         <p id="kpi-avg-desc" class="mt-2 text-xs text-slate-400">
           노란색 점선 기준 평균값과 일치
@@ -326,10 +328,10 @@
         <div>
           <div class="flex flex-wrap items-center gap-2">
             <h2 id="chart-title" class="text-base font-bold text-white sm:text-lg">
-              SCHD 시가배당률 추이 (최근 5년: 2021.11 – 2026.11)
+              SCHD 시가배당률 추이 (최근 5년: 2021.11 – 오늘)
             </h2>
             <span class="rounded-full bg-slate-800 px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
-              주단위(7일) 촘촘한 상세보기 · 연·월·일 툴팁 · 연·월 축
+              일단위(1일) 촘촘한 상세보기 · 연·월·일 툴팁 · 연·월 축
             </span>
           </div>
           <p class="mt-1 text-xs text-slate-400">
@@ -338,8 +340,8 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <span id="weekly-count-badge" class="rounded-xl border border-slate-800 bg-bgMain px-3 py-2 font-mono text-xs text-slate-300 tabular-nums">
-            주간 데이터 집계중
+          <span id="daily-count-badge" class="rounded-xl border border-slate-800 bg-bgMain px-3 py-2 font-mono text-xs text-slate-300 tabular-nums">
+            일간 데이터 집계중
           </span>
           <button
             id="toggle-annotations-btn"
@@ -379,12 +381,12 @@
           class="pointer-events-none absolute left-0 top-0 z-20 hidden w-64 rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-2xl backdrop-blur-md"
         >
           <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-1.5">
-            <span id="tt-date" class="font-mono font-bold text-white">2026년 11월 22일</span>
+            <span id="tt-date" class="font-mono font-bold text-white">오늘</span>
             <span id="tt-zone" class="shrink-0 rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-300">평균 하회</span>
           </div>
           <div class="mt-2 space-y-1 tabular-nums">
             <div class="flex justify-between">
-              <span class="text-slate-400">주간 시가배당률:</span>
+              <span class="text-slate-400">일간 시가배당률:</span>
               <span id="tt-yield" class="font-mono font-bold text-brandOrange">3.11%</span>
             </div>
             <div class="flex justify-between">
@@ -400,8 +402,8 @@
               <span id="tt-price" class="font-mono text-slate-200">$33.94</span>
             </div>
             <div class="flex justify-between border-t border-slate-800/80 pt-1 text-[11px]">
-              <span class="text-slate-400">전주 대비:</span>
-              <span id="tt-wow" class="font-mono font-semibold text-slate-300">0.00%p</span>
+              <span class="text-slate-400">전일 대비:</span>
+              <span id="tt-dod" class="font-mono font-semibold text-slate-300">0.00%p</span>
             </div>
           </div>
         </div>
@@ -411,46 +413,60 @@
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex flex-wrap items-center gap-2">
             <span class="rounded-md bg-orange-500/15 px-2 py-0.5 text-[11px] font-bold text-orange-300">
-              주단위(7일) 상세 스크러버
+              일단위(1일) 상세 스크러버
             </span>
             <span id="scrub-date-label" class="font-mono text-xs font-bold text-white tabular-nums">
-              2026년 11월 22일
+              오늘
             </span>
             <span id="scrub-metrics-label" class="font-mono text-xs text-slate-300 tabular-nums">
-              배당률 3.11% · 주가 $33.94 (전주 대비 0.00%p)
+              배당률 3.11% · 주가 $33.94 (전일 대비 0.00%p)
             </span>
           </div>
-          <div class="flex items-center gap-1.5 self-end sm:self-auto">
+          <div class="flex flex-wrap items-center gap-1.5 self-end sm:self-auto">
             <button
               id="scrub-prev-week-btn"
               type="button"
+              class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-amber-200 transition hover:border-amber-400/60 hover:text-white"
+            >
+              ◀ -7일
+            </button>
+            <button
+              id="scrub-prev-day-btn"
+              type="button"
               class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-white"
             >
-              ◀ 이전 주(-7일)
+              ◀ -1일
+            </button>
+            <button
+              id="scrub-next-day-btn"
+              type="button"
+              class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-white"
+            >
+              +1일 ▶
             </button>
             <button
               id="scrub-next-week-btn"
               type="button"
-              class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-white"
+              class="rounded-lg border border-slate-700 bg-bgCard px-2.5 py-1 text-xs font-semibold text-amber-200 transition hover:border-amber-400/60 hover:text-white"
             >
-              다음 주(+7일) ▶
+              +7일 ▶
             </button>
             <button
-              id="scrub-latest-week-btn"
+              id="scrub-latest-day-btn"
               type="button"
               class="rounded-lg border border-orange-500/40 bg-orange-500/15 px-2.5 py-1 text-xs font-semibold text-orange-300 transition hover:bg-orange-500/25"
             >
-              최신 주
+              최신 일(오늘)
             </button>
           </div>
         </div>
         <input
-          id="weekly-scrubber"
+          id="daily-scrubber"
           type="range"
           min="0"
           max="1"
           value="0"
-          aria-label="주단위 시가배당률 스크러버"
+          aria-label="일단위 시가배당률 스크러버"
           class="mt-3 h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-800 accent-orange-500"
         />
       </div>
@@ -458,21 +474,21 @@
       <div class="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-800 bg-bgMain/70 p-3.5 sm:grid-cols-3">
         <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
           <div>
-            <p class="text-[11px] text-slate-400">최근 5년 평균 (2021.11 – 2026.11)</p>
+            <p id="card-5y-range" class="text-[11px] text-slate-400">최근 5년 평균 (2021.11 – 오늘)</p>
             <p class="text-xs text-slate-300">고배당 가치주 재평가 반영 구간</p>
           </div>
           <span class="font-mono text-lg font-extrabold text-yellow-300 tabular-nums">3.46%</span>
         </div>
         <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
           <div>
-            <p class="text-[11px] text-slate-400">최근 10년 평균 (2016.11 – 2026.11)</p>
+            <p id="card-10y-range" class="text-[11px] text-slate-400">최근 10년 평균 (2016.11 – 오늘)</p>
             <p class="text-xs text-slate-300">코로나19 급락기 및 금리 인상기 포함</p>
           </div>
           <span class="font-mono text-lg font-extrabold text-amber-300 tabular-nums">3.20%</span>
         </div>
         <div class="flex items-center justify-between rounded-lg bg-bgCard px-3.5 py-2.5">
           <div>
-            <p class="text-[11px] text-slate-400">상장일 이후 전체 평균 (2011.10 – 2026.11)</p>
+            <p id="card-all-range" class="text-[11px] text-slate-400">상장일 이후 전체 평균 (2011.10 – 오늘)</p>
             <p class="text-xs text-slate-300">약 15년 장기 역사적 평균치</p>
           </div>
           <span class="font-mono text-lg font-extrabold text-orange-300 tabular-nums">3.15%</span>
@@ -484,8 +500,8 @@
       <section class="rounded-2xl border border-borderSubtle bg-bgCard p-4 shadow-sm sm:p-6 lg:col-span-8">
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 class="text-base font-bold text-white sm:text-lg">
-              연도별 SCHD 실제 배당 및 시가배당률 데이터 (2011 – 2026)
+            <h3 id="annual-table-heading" class="text-base font-bold text-white sm:text-lg">
+              연도별 SCHD 실제 배당 및 시가배당률 데이터 (2011 – 현재)
             </h3>
             <p class="text-xs text-slate-400">
               3:1 액면분할(2024.10 반영) 소급 적용 기준 · 주당 배당금($) 및 연중 배당률 범위
@@ -525,7 +541,7 @@
           </table>
         </div>
         <p id="table-footnote" class="mt-3 text-[11px] text-slate-500">
-          * 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, 2026년은 구글 시트 연동 실시간 기준(연배당금 $1.0541, 주가 $33.94)입니다.
+          * 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, 현재 연도는 구글 시트 연동 기준(연배당금 $1.0541, 주가 $33.94)입니다.
         </p>
       </section>
 
@@ -560,12 +576,31 @@
   <script>
     const SHEET_CSV_URL =
       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsfWHfBBs2owjyhb8FWBRAN3wMN_93WAulOu6mJpDrPubgAakHFJzGS7nTkbi-JmMMbxlycIeQUbFf/pub?gid=1655940963&single=true&output=csv';
-    const CACHE_KEY = 'schd_sheet_cache_v1';
+    const TWELVE_DATA_API_KEY = '2dc4a4e26ecd432491177ee79b25a84a';
+    const CACHE_KEY = 'schd_twelvedata_daily_v1';
+
+    function getTodayIsoDate() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDotYM(isoStr) {
+      const [y, m] = isoStr.split('-');
+      return `${y}.${m}`;
+    }
+
+    const TODAY_ISO = getTodayIsoDate();
+    const CURRENT_YEAR = TODAY_ISO.slice(0, 4);
+    const TODAY_DOT_YM = formatDotYM(TODAY_ISO);
 
     const liveState = {
       priceSource: 'sheet',
       sheetPrice: 33.94,
       livePrice: null,
+      usdKrwRate: null,
       price: 33.94,
       annualDividend: 1.0541,
       yieldPct: Number(((1.0541 / 33.94) * 100).toFixed(2)),
@@ -645,11 +680,11 @@
       { date: '2026-08-21', yield: 3.01, price: 34.45 },
       { date: '2026-09-18', yield: 3.22, price: 32.50 },
       { date: '2026-10-16', yield: 2.94, price: 35.10 },
-      { date: '2026-11-22', yield: 3.11, price: 33.94 },
+      { date: TODAY_ISO, yield: liveState.yieldPct, price: liveState.price },
     ];
 
     const annualData = [
-      { year: '2026 (현재)', avgYield: 3.19, endYield: 3.11, maxYield: 3.46, minYield: 2.94, dividend: 1.0541, growth: '+0.68%' },
+      { year: `${CURRENT_YEAR} (현재)`, avgYield: 3.19, endYield: 3.11, maxYield: 3.46, minYield: 2.94, dividend: 1.0541, growth: '+0.68%' },
       { year: '2025', avgYield: 3.79, endYield: 3.81, maxYield: 4.27, minYield: 3.45, dividend: 1.047, growth: '+5.33%' },
       { year: '2024', avgYield: 3.49, endYield: 3.63, maxYield: 3.74, minYield: 3.28, dividend: 0.994, growth: '+12.19%' },
       { year: '2023', avgYield: 3.55, endYield: 3.48, maxYield: 3.91, minYield: 3.26, dividend: 0.886, growth: '+3.75%' },
@@ -670,8 +705,8 @@
     const periodConfigs = {
       '5y': {
         label: '최근 5년 평균 시가배당률',
-        chartTitle: 'SCHD 시가배당률 추이 (최근 5년: 2021.11 – 2026.11)',
-        rangeText: '2021.11 – 2026.11',
+        chartTitle: `SCHD 시가배당률 추이 (최근 5년: 2021.11 – ${TODAY_DOT_YM})`,
+        rangeText: `2021.11 – ${TODAY_DOT_YM}`,
         avg: 3.46,
         desc: '노란색 점선 기준 평균값(3.46%) 일치',
         maxVal: '4.27%',
@@ -683,8 +718,8 @@
       },
       '10y': {
         label: '최근 10년 평균 시가배당률',
-        chartTitle: 'SCHD 시가배당률 추이 (최근 10년: 2016.11 – 2026.11)',
-        rangeText: '2016.11 – 2026.11',
+        chartTitle: `SCHD 시가배당률 추이 (최근 10년: 2016.11 – ${TODAY_DOT_YM})`,
+        rangeText: `2016.11 – ${TODAY_DOT_YM}`,
         avg: 3.20,
         desc: '코로나19 급락기(4.37%) 및 금리 상승기 포함 10년 평균',
         maxVal: '4.37%',
@@ -696,10 +731,10 @@
       },
       'all': {
         label: '상장일 이후 전체 평균 시가배당률',
-        chartTitle: 'SCHD 시가배당률 추이 (상장일 2011.10.20 – 2026.11.22)',
-        rangeText: '2011.10 – 2026.11',
+        chartTitle: `SCHD 시가배당률 추이 (상장일 2011.10.20 – ${TODAY_ISO.replace(/-/g, '.')})`,
+        rangeText: `2011.10 – ${TODAY_DOT_YM}`,
         avg: 3.15,
-        desc: '2011년 10월 20일 상장 이후 약 15년 전체 평균',
+        desc: '2011년 10월 20일 상장 이후 장기 역사적 평균치',
         maxVal: '4.37%',
         minVal: '2.47%',
         minMaxDesc: '최고: 2020년 03월 20일 · 최저: 2018년 09월 14일',
@@ -708,6 +743,15 @@
         yMax: 4.6,
       },
     };
+
+    function applyDynamicDateLabels() {
+      const todayFormatted = TODAY_ISO.replace(/-/g, '.');
+      document.getElementById('header-span-badge').textContent = `상장일 2011.10.20 – ${todayFormatted}`;
+      document.getElementById('card-5y-range').textContent = `최근 5년 평균 (2021.11 – ${TODAY_DOT_YM})`;
+      document.getElementById('card-10y-range').textContent = `최근 10년 평균 (2016.11 – ${TODAY_DOT_YM})`;
+      document.getElementById('card-all-range').textContent = `상장일 이후 전체 평균 (2011.10 – ${TODAY_DOT_YM})`;
+      document.getElementById('annual-table-heading').textContent = `연도별 SCHD 실제 배당 및 시가배당률 데이터 (2011 – ${CURRENT_YEAR})`;
+    }
 
     function parseIsoDate(isoStr) {
       const [y, m, d] = isoStr.split('-').map(Number);
@@ -731,7 +775,7 @@
       return `${y}년 ${m}월`;
     }
 
-    function buildWeeklySeries(anchors, stepDays = 7) {
+    function buildDailySeries(anchors, stepDays = 1) {
       const parsedAnchors = anchors.map((a) => ({
         ms: parseIsoDate(a.date).getTime(),
         yield: a.yield,
@@ -742,7 +786,7 @@
       const endMs = parsedAnchors[parsedAnchors.length - 1].ms;
       const stepMs = stepDays * 24 * 60 * 60 * 1000;
 
-      const weekly = [];
+      const daily = [];
       let anchorIdx = 0;
 
       for (let t = startMs; t <= endMs; t += stepMs) {
@@ -758,8 +802,8 @@
         const interpYield = left.yield + (right.yield - left.yield) * smooth;
         const interpPrice = left.price + (right.price - left.price) * smooth;
 
-        const weekIndex = Math.round((t - startMs) / stepMs);
-        const microWave = Math.sin(weekIndex * 0.85) * 0.025 + Math.cos(weekIndex * 0.37) * 0.015;
+        const dayIndex = Math.round((t - startMs) / stepMs);
+        const microWave = Math.sin(dayIndex * 0.22) * 0.02 + Math.cos(dayIndex * 0.09) * 0.012;
         const isFinal = t + stepMs > endMs;
 
         const finalYield = isFinal
@@ -770,47 +814,47 @@
           : Number(Math.max(7.5, interpPrice * (1 - microWave * 0.25)).toFixed(2));
 
         const isoDate = formatIsoDate(new Date(t));
-        const prevYield = weekly.length > 0 ? weekly[weekly.length - 1].yield : finalYield;
-        const wowDiff = Number((finalYield - prevYield).toFixed(2));
+        const prevYield = daily.length > 0 ? daily[daily.length - 1].yield : finalYield;
+        const dodDiff = Number((finalYield - prevYield).toFixed(2));
 
-        weekly.push({
+        daily.push({
           date: isoDate,
           ymdLabel: formatKoreanYMD(isoDate),
           ymLabel: formatKoreanYM(isoDate),
           yield: finalYield,
           price: finalPrice,
-          wowDiff,
+          dodDiff,
         });
       }
 
       const lastIso = formatIsoDate(new Date(endMs));
-      if (weekly[weekly.length - 1]?.date !== lastIso) {
+      if (daily[daily.length - 1]?.date !== lastIso) {
         const lastAnchor = parsedAnchors[parsedAnchors.length - 1];
-        const prevYield = weekly.length > 0 ? weekly[weekly.length - 1].yield : lastAnchor.yield;
-        weekly.push({
+        const prevYield = daily.length > 0 ? daily[daily.length - 1].yield : lastAnchor.yield;
+        daily.push({
           date: lastIso,
           ymdLabel: formatKoreanYMD(lastIso),
           ymLabel: formatKoreanYM(lastIso),
           yield: lastAnchor.yield,
           price: lastAnchor.price,
-          wowDiff: Number((lastAnchor.yield - prevYield).toFixed(2)),
+          dodDiff: Number((lastAnchor.yield - prevYield).toFixed(2)),
         });
       }
 
-      return weekly;
+      return daily;
     }
 
-    const weeklySeries = buildWeeklySeries(anchorSeries, 7);
+    const dailySeries = buildDailySeries(anchorSeries, 1);
 
     let currentPeriod = '5y';
     let showAnnotations = true;
     let activeFilteredSeries = [];
-    let selectedWeekIndex = 0;
+    let selectedDayIndex = 0;
 
     const chartSvg = document.getElementById('yield-chart');
     const chartWrapper = document.getElementById('chart-wrapper');
     const tooltip = document.getElementById('chart-tooltip');
-    const scrubberEl = document.getElementById('weekly-scrubber');
+    const scrubberEl = document.getElementById('daily-scrubber');
 
     function showToast(msg) {
       const box = document.getElementById('toast-box');
@@ -825,7 +869,7 @@
       }, 2600);
     }
 
-    async function fetchWithTimeout(url, timeoutMs = 3500) {
+    async function fetchWithTimeout(url, timeoutMs = 4000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -852,6 +896,9 @@
         if (typeof cached.livePrice === 'number' && cached.livePrice > 0) {
           liveState.livePrice = cached.livePrice;
         }
+        if (typeof cached.usdKrwRate === 'number' && cached.usdKrwRate > 0) {
+          liveState.usdKrwRate = cached.usdKrwRate;
+        }
         return true;
       } catch (_) {
         return false;
@@ -866,6 +913,7 @@
             sheetPrice: liveState.sheetPrice,
             annualDividend: liveState.annualDividend,
             livePrice: liveState.livePrice,
+            usdKrwRate: liveState.usdKrwRate,
             syncedAtLabel,
           })
         );
@@ -918,7 +966,7 @@
 
     async function fetchSheetCsvData() {
       const separator = SHEET_CSV_URL.includes('?') ? '&' : '?';
-      const res = await fetchWithTimeout(`${SHEET_CSV_URL}${separator}_ts=${Date.now()}`, 3500);
+      const res = await fetchWithTimeout(`${SHEET_CSV_URL}${separator}_ts=${Date.now()}`, 4000);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const csvText = await res.text();
@@ -967,7 +1015,82 @@
       return updated;
     }
 
+    function parseTwelveDataPrice(payload) {
+      if (!payload || typeof payload !== 'object') return null;
+      if (payload.status === 'error' || payload.code) return null;
+
+      const candidates = [
+        payload.price,
+        payload.close,
+        payload.last,
+        payload.previous_close,
+      ];
+
+      for (const raw of candidates) {
+        if (raw === undefined || raw === null) continue;
+        const cleaned = String(raw).replace(/[$,\s]/g, '');
+        const num = Number(cleaned);
+        if (!Number.isNaN(num) && Number.isFinite(num) && num > 0) {
+          return Number(num.toFixed(4));
+        }
+      }
+      return null;
+    }
+
+    function parseLiveQuotePayload(data) {
+      const price = parseTwelveDataPrice(data);
+      if (typeof price === 'number' && price > 5 && price < 500) {
+        return Number(price.toFixed(2));
+      }
+      return null;
+    }
+
+    async function fetchQuoteWithApiKey(apiKey = TWELVE_DATA_API_KEY) {
+      const priceUrl = `https://api.twelvedata.com/price?symbol=SCHD&apikey=${encodeURIComponent(apiKey)}`;
+      try {
+        const res = await fetchWithTimeout(priceUrl, 4000);
+        if (res.ok) {
+          const json = await res.json();
+          const parsed = parseLiveQuotePayload(json);
+          if (typeof parsed === 'number') {
+            return parsed;
+          }
+        }
+      } catch (_) {}
+
+      const quoteUrl = `https://api.twelvedata.com/quote?symbol=SCHD&apikey=${encodeURIComponent(apiKey)}`;
+      try {
+        const res = await fetchWithTimeout(quoteUrl, 4000);
+        if (!res.ok) return null;
+        const json = await res.json();
+        return parseLiveQuotePayload(json);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function fetchUsdKrwWithApiKey(apiKey = TWELVE_DATA_API_KEY) {
+      const fxUrl = `https://api.twelvedata.com/price?symbol=USD/KRW&apikey=${encodeURIComponent(apiKey)}`;
+      try {
+        const res = await fetchWithTimeout(fxUrl, 4000);
+        if (!res.ok) return null;
+        const json = await res.json();
+        const rate = parseTwelveDataPrice(json);
+        if (typeof rate === 'number' && rate > 800 && rate < 2500) {
+          return Number(rate.toFixed(2));
+        }
+        return null;
+      } catch (_) {
+        return null;
+      }
+    }
+
     async function tryFetchExternalSchdPrice() {
+      const keyedPrice = await fetchQuoteWithApiKey(TWELVE_DATA_API_KEY);
+      if (typeof keyedPrice === 'number') {
+        return keyedPrice;
+      }
+
       try {
         const res = await fetchWithTimeout(
           `https://stooq.com/q/l/?s=schd.us&f=sd2t2ohlcv&h&e=csv&_t=${Date.now()}`,
@@ -1013,24 +1136,36 @@
 
     function updateScrubberReadout() {
       if (!activeFilteredSeries.length) return;
-      const idx = Math.max(0, Math.min(selectedWeekIndex, activeFilteredSeries.length - 1));
-      selectedWeekIndex = idx;
+      const idx = Math.max(0, Math.min(selectedDayIndex, activeFilteredSeries.length - 1));
+      selectedDayIndex = idx;
       scrubberEl.max = String(Math.max(activeFilteredSeries.length - 1, 0));
       scrubberEl.value = String(idx);
 
       const pt = activeFilteredSeries[idx];
-      const wowSign = pt.wowDiff > 0 ? '+' : '';
+      const dodSign = pt.dodDiff > 0 ? '+' : '';
       document.getElementById('scrub-date-label').textContent = pt.ymdLabel;
       document.getElementById('scrub-metrics-label').textContent =
-        `배당률 ${pt.yield.toFixed(2)}% · 주가 $${pt.price.toFixed(2)} (전주 대비 ${wowSign}${pt.wowDiff.toFixed(2)}%p)`;
+        `배당률 ${pt.yield.toFixed(2)}% · 주가 $${pt.price.toFixed(2)} (전일 대비 ${dodSign}${pt.dodDiff.toFixed(2)}%p)`;
+    }
+
+    function jumpScrubberByDays(deltaDays) {
+      const maxIdx = Math.max(activeFilteredSeries.length - 1, 0);
+      const nextIdx = Math.max(0, Math.min(maxIdx, selectedDayIndex + deltaDays));
+      if (typeof window.__highlightDailyIndex === 'function') {
+        window.__highlightDailyIndex(nextIdx, false);
+      } else {
+        selectedDayIndex = nextIdx;
+        updateScrubberReadout();
+      }
     }
 
     function applyLiveStateToUI({ rebuildTable = true, preserveScrubIndex = false } = {}) {
       syncActivePriceAndYield();
       updatePriceSourceButtons();
 
-      const { price, annualDividend, yieldPct, sheetPrice, livePrice, priceSource } = liveState;
+      const { price, annualDividend, yieldPct, sheetPrice, livePrice, usdKrwRate, priceSource } = liveState;
       const usingLive = priceSource === 'live' && typeof livePrice === 'number';
+      const fxSuffix = typeof usdKrwRate === 'number' ? ` · 환율 ₩${usdKrwRate.toLocaleString()}` : '';
 
       document.getElementById('kpi-price-mode-badge').textContent = usingLive ? '실시간 시세 기준' : '시트 주가 기준';
       document.getElementById('kpi-current-yield').textContent = `${yieldPct.toFixed(2)}%`;
@@ -1038,7 +1173,7 @@
         `기준 주가 <strong class="text-slate-200">$${price.toFixed(2)}</strong> · 최근 12M 배당 <strong class="text-slate-200">$${annualDividend.toFixed(4)}</strong>`;
 
       const liveStr = typeof livePrice === 'number' ? `$${livePrice.toFixed(2)}` : '조회 불가(시트 대체)';
-      document.getElementById('kpi-price-compare').textContent = `시트 주가 $${sheetPrice.toFixed(2)} · 실시간 시세 ${liveStr}`;
+      document.getElementById('kpi-price-compare').textContent = `시트 주가 $${sheetPrice.toFixed(2)} · 실시간 시세 ${liveStr}${fxSuffix}`;
 
       document.getElementById('calc-current-price-source').textContent = usingLive
         ? '현재 주가 (실시간 시세 기준)'
@@ -1050,17 +1185,21 @@
       document.getElementById('calc-ttm-hint').textContent = `시트 TTM: $${annualDividend.toFixed(4)}`;
       document.getElementById('calc-price-label').textContent = `현재 주가 ($${price.toFixed(2)}) 대비 괴리`;
 
-      const lastWeek = weeklySeries[weeklySeries.length - 1];
-      if (lastWeek) {
-        lastWeek.yield = yieldPct;
-        lastWeek.price = price;
-        const prevWeek = weeklySeries[weeklySeries.length - 2];
-        if (prevWeek) {
-          lastWeek.wowDiff = Number((yieldPct - prevWeek.yield).toFixed(2));
+      const lastDay = dailySeries[dailySeries.length - 1];
+      if (lastDay) {
+        lastDay.date = TODAY_ISO;
+        lastDay.ymdLabel = formatKoreanYMD(TODAY_ISO);
+        lastDay.ymLabel = formatKoreanYM(TODAY_ISO);
+        lastDay.yield = yieldPct;
+        lastDay.price = price;
+        const prevDay = dailySeries[dailySeries.length - 2];
+        if (prevDay) {
+          lastDay.dodDiff = Number((yieldPct - prevDay.yield).toFixed(2));
         }
       }
 
       if (annualData[0]) {
+        annualData[0].year = `${CURRENT_YEAR} (현재)`;
         annualData[0].endYield = yieldPct;
         annualData[0].dividend = annualDividend;
         const prevDiv = annualData[1]?.dividend || 1.047;
@@ -1069,7 +1208,7 @@
       }
 
       document.getElementById('table-footnote').textContent =
-        `* 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, 2026년은 ${usingLive ? '실시간 시세' : '구글 시트'} 기준(연배당금 $${annualDividend.toFixed(4)}, 주가 $${price.toFixed(2)})입니다.`;
+        `* 2011년은 10월 20일 상장 이후 4분기 단일 배당 지급 기준이며, ${CURRENT_YEAR}년은 ${usingLive ? 'Twelve Data 실시간 시세' : '구글 시트'} 기준(연배당금 $${annualDividend.toFixed(4)}, 주가 $${price.toFixed(2)})입니다.`;
 
       if (rebuildTable) {
         renderAnnualTable();
@@ -1078,52 +1217,76 @@
       setPeriod(currentPeriod, preserveScrubIndex);
     }
 
-    /**
-     * 병렬 조회 + 타임아웃 + 캐시 선반영으로 시트 연동 속도 개선
-     */
-    async function syncFromPublishedSheet(manualTrigger = false) {
+    async function fetchLiveMarketData(manualTrigger = false) {
       if (liveState.isSyncing) return;
       liveState.isSyncing = true;
 
       const syncBtn = document.getElementById('sync-sheet-btn');
+      const spinner = document.getElementById('syncSpinner');
       const dot = document.getElementById('sync-dot');
       const statusText = document.getElementById('sync-status-text');
+      const statusMsg = document.getElementById('apiStatusMessage');
 
       syncBtn.disabled = true;
+      if (spinner) spinner.classList.remove('hidden');
       dot.className = 'h-1.5 w-1.5 animate-ping rounded-full bg-amber-400';
-      statusText.textContent = '시트 동기화 중...';
+      statusText.textContent = '시세 동기화 중...';
+      if (statusMsg) {
+        statusMsg.className = 'mt-1 text-[11px] font-medium text-blue-400';
+        statusMsg.textContent = '구글시트 및 Twelve Data 실시간 주가/환율을 동기화 중입니다...';
+      }
 
-      const [sheetResult, liveResult] = await Promise.allSettled([
+      const [sheetResult, liveResult, fxResult] = await Promise.allSettled([
         fetchSheetCsvData(),
-        tryFetchExternalSchdPrice(),
+        fetchQuoteWithApiKey(TWELVE_DATA_API_KEY),
+        fetchUsdKrwWithApiKey(TWELVE_DATA_API_KEY),
       ]);
 
       const sheetLoaded = sheetResult.status === 'fulfilled' && Boolean(sheetResult.value);
       if (liveResult.status === 'fulfilled' && typeof liveResult.value === 'number') {
         liveState.livePrice = liveResult.value;
       }
+      if (fxResult.status === 'fulfilled' && typeof fxResult.value === 'number') {
+        liveState.usdKrwRate = fxResult.value;
+      }
 
       applyLiveStateToUI({ rebuildTable: true, preserveScrubIndex: manualTrigger });
 
       const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-      if (sheetLoaded) {
+      const liveReady = typeof liveState.livePrice === 'number';
+
+      if (sheetLoaded || liveReady) {
         saveSessionCache(nowStr);
         dot.className = 'h-1.5 w-1.5 rounded-full bg-emerald-400';
-        statusText.textContent = `시트 연동됨 (${nowStr})`;
+        statusText.textContent = `동기화 완료 (${nowStr})`;
+        if (statusMsg) {
+          statusMsg.className = 'mt-1 text-[11px] font-medium text-emerald-400';
+          const fxText = typeof liveState.usdKrwRate === 'number' ? ` · USD/KRW ₩${liveState.usdKrwRate.toLocaleString()}` : '';
+          statusMsg.textContent = `기준일 ${TODAY_ISO} 반영 · 시트주가 $${liveState.sheetPrice.toFixed(2)} / Twelve Data ${
+            liveReady ? `$${liveState.livePrice.toFixed(2)}` : '미수신(시트 대체)'
+          }${fxText}`;
+        }
       } else {
         dot.className = 'h-1.5 w-1.5 rounded-full bg-amber-400';
         statusText.textContent = '시트 기본값 사용중';
+        if (statusMsg) {
+          statusMsg.className = 'mt-1 text-[11px] font-medium text-amber-400';
+          statusMsg.textContent = 'Twelve Data 응답이 지연되거나 한도에 도달해 시트/기본값 기준으로 표시 중입니다.';
+        }
       }
 
+      if (spinner) spinner.classList.add('hidden');
       syncBtn.disabled = false;
       liveState.isSyncing = false;
 
       if (manualTrigger) {
         showToast(
-          `동기화 완료 · 연배당 $${liveState.annualDividend.toFixed(4)} / 시트주가 $${liveState.sheetPrice.toFixed(2)}`
+          `동기화 완료 (${TODAY_ISO}) · 연배당 $${liveState.annualDividend.toFixed(4)} / 기준주가 $${liveState.price.toFixed(2)}`
         );
       }
     }
+
+    const syncFromPublishedSheet = fetchLiveMarketData;
 
     function setPeriod(period, preserveScrubIndex = false) {
       currentPeriod = period;
@@ -1136,11 +1299,11 @@
           : 'period-tab rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:text-white sm:px-4 sm:text-sm';
       });
 
-      activeFilteredSeries = weeklySeries.filter((d) => d.date >= cfg.startDate);
+      activeFilteredSeries = dailySeries.filter((d) => d.date >= cfg.startDate);
       const maxIdx = Math.max(activeFilteredSeries.length - 1, 0);
-      selectedWeekIndex = preserveScrubIndex ? Math.min(selectedWeekIndex, maxIdx) : maxIdx;
+      selectedDayIndex = preserveScrubIndex ? Math.min(selectedDayIndex, maxIdx) : maxIdx;
 
-      document.getElementById('weekly-count-badge').textContent = `주간 ${activeFilteredSeries.length}주 데이터`;
+      document.getElementById('daily-count-badge').textContent = `일간 ${activeFilteredSeries.length.toLocaleString()}일 데이터`;
       document.getElementById('kpi-avg-label').textContent = cfg.label;
       document.getElementById('kpi-avg-value').textContent = `${cfg.avg.toFixed(2)}%`;
       document.getElementById('kpi-period-range').textContent = cfg.rangeText;
@@ -1191,7 +1354,7 @@
 
     function renderChart() {
       const cfg = periodConfigs[currentPeriod];
-      const data = activeFilteredSeries.length ? activeFilteredSeries : weeklySeries.filter((d) => d.date >= cfg.startDate);
+      const data = activeFilteredSeries.length ? activeFilteredSeries : dailySeries.filter((d) => d.date >= cfg.startDate);
       const avg = cfg.avg;
 
       const rect = chartWrapper.getBoundingClientRect();
@@ -1202,7 +1365,7 @@
       const padLeft = isNarrow ? 44 : 56;
       const padRight = isNarrow ? 52 : 68;
       const padTop = 28;
-      const padBottom = isNarrow ? 54 : 44;
+      const padBottom = isNarrow ? 58 : 48;
 
       const plotW = width - padLeft - padRight;
       const plotH = height - padTop - padBottom;
@@ -1231,7 +1394,7 @@
         }
       }
 
-      const minLabelGapPx = isNarrow ? 64 : 84;
+      const minLabelGapPx = isNarrow ? 42 : 52;
       const xLabels = [];
       let lastLabelX = -Infinity;
 
@@ -1243,7 +1406,7 @@
         const isMonthChange = curYm !== prevYm;
 
         if ((isFirst || isMonthChange || isLast) && p.x - lastLabelX >= minLabelGapPx) {
-          if (isLast && p.x - lastLabelX < minLabelGapPx * 0.75 && xLabels.length > 0) {
+          if (isLast && p.x - lastLabelX < minLabelGapPx * 0.65 && xLabels.length > 0) {
             xLabels[xLabels.length - 1] = { x: p.x, ym: curYm };
           } else {
             xLabels.push({ x: p.x, ym: curYm });
@@ -1253,7 +1416,7 @@
       });
 
       const lastPt = coords[coords.length - 1];
-      const oct2026Pt = coords.find((p) => p.raw.date.startsWith('2026-10')) || lastPt;
+      const recentPt = coords.find((p) => p.raw.date.startsWith(`${CURRENT_YEAR}-10`)) || lastPt;
 
       let svgHtml = `
         <defs>
@@ -1291,9 +1454,9 @@
               y="${yBase}"
               text-anchor="end"
               fill="#94a3b8"
-              font-size="10"
+              font-size="9.5"
               font-family="'Noto Sans KR', sans-serif"
-              transform="rotate(-38 ${lbl.x.toFixed(1)} ${yBase})"
+              transform="rotate(-42 ${lbl.x.toFixed(1)} ${yBase})"
             >${lbl.ym}</text>
           `;
         } else {
@@ -1303,7 +1466,7 @@
               y="${height - 12}"
               text-anchor="middle"
               fill="#94a3b8"
-              font-size="11"
+              font-size="10.5"
               font-family="'Noto Sans KR', sans-serif"
             >${lbl.ym}</text>
           `;
@@ -1343,7 +1506,7 @@
       `;
 
       if (showAnnotations) {
-        const targetPt = oct2026Pt;
+        const targetPt = recentPt;
         const calloutX = Math.max(targetPt.x - (isNarrow ? 95 : 135), padLeft + 10);
         const calloutY = Math.min(avgY + 34, height - padBottom - 26);
 
@@ -1377,7 +1540,7 @@
           font-weight="800"
           font-family="'Noto Sans KR', sans-serif"
         >
-          지금 ${lastPt.raw.yield.toFixed(2)}% ($${lastPt.raw.price.toFixed(2)})
+          지금 ${lastPt.raw.yield.toFixed(2)}% ($${lastPt.raw.price.toFixed(2)}) · ${lastPt.raw.date.slice(5)}
         </text>
       `;
 
@@ -1399,7 +1562,7 @@
         const pt = coords[clampedIdx];
         if (!pt) return;
 
-        selectedWeekIndex = clampedIdx;
+        selectedDayIndex = clampedIdx;
         updateScrubberReadout();
 
         vline.setAttribute('x1', pt.x);
@@ -1413,16 +1576,16 @@
         if (!showFloatingTooltip) return;
 
         const diff = pt.raw.yield - avg;
-        const wowSign = pt.raw.wowDiff > 0 ? '+' : '';
+        const dodSign = pt.raw.dodDiff > 0 ? '+' : '';
         document.getElementById('tt-date').textContent = pt.raw.ymdLabel;
         document.getElementById('tt-yield').textContent = `${pt.raw.yield.toFixed(2)}%`;
         document.getElementById('tt-avg').textContent = `${avg.toFixed(2)}%`;
         document.getElementById('tt-price').textContent = `$${pt.raw.price.toFixed(2)}`;
 
-        const wowEl = document.getElementById('tt-wow');
-        wowEl.textContent = `${wowSign}${pt.raw.wowDiff.toFixed(2)}%p`;
-        wowEl.className = `font-mono font-semibold ${
-          pt.raw.wowDiff > 0 ? 'text-emerald-400' : pt.raw.wowDiff < 0 ? 'text-rose-400' : 'text-slate-300'
+        const dodEl = document.getElementById('tt-dod');
+        dodEl.textContent = `${dodSign}${pt.raw.dodDiff.toFixed(2)}%p`;
+        dodEl.className = `font-mono font-semibold ${
+          pt.raw.dodDiff > 0 ? 'text-emerald-400' : pt.raw.dodDiff < 0 ? 'text-rose-400' : 'text-slate-300'
         }`;
 
         const diffEl = document.getElementById('tt-diff');
@@ -1479,7 +1642,7 @@
       );
       overlay.addEventListener('touchend', hidePointer);
 
-      window.__highlightWeeklyIndex = (idx, showTip = false) => showPointAtIndex(idx, showTip);
+      window.__highlightDailyIndex = (idx, showTip = false) => showPointAtIndex(idx, showTip);
     }
 
     function renderAnnualTable() {
@@ -1533,7 +1696,7 @@
       btn.addEventListener('click', async () => {
         const chosen = btn.dataset.priceSource;
         if (chosen === 'live' && typeof liveState.livePrice !== 'number') {
-          showToast('실시간 시세를 조회하는 중입니다...');
+          showToast('Twelve Data 실시간 시세를 조회하는 중입니다...');
           const fetched = await tryFetchExternalSchdPrice();
           if (typeof fetched === 'number') {
             liveState.livePrice = fetched;
@@ -1553,7 +1716,7 @@
     });
 
     document.getElementById('sync-sheet-btn').addEventListener('click', () => {
-      syncFromPublishedSheet(true);
+      fetchLiveMarketData(true);
     });
 
     document.getElementById('toggle-annotations-btn').addEventListener('click', () => {
@@ -1565,32 +1728,23 @@
 
     scrubberEl.addEventListener('input', (e) => {
       const idx = Number(e.target.value) || 0;
-      if (typeof window.__highlightWeeklyIndex === 'function') {
-        window.__highlightWeeklyIndex(idx, false);
+      if (typeof window.__highlightDailyIndex === 'function') {
+        window.__highlightDailyIndex(idx, false);
       } else {
-        selectedWeekIndex = idx;
+        selectedDayIndex = idx;
         updateScrubberReadout();
       }
     });
 
-    document.getElementById('scrub-prev-week-btn').addEventListener('click', () => {
-      const nextIdx = Math.max(0, selectedWeekIndex - 1);
-      if (typeof window.__highlightWeeklyIndex === 'function') {
-        window.__highlightWeeklyIndex(nextIdx, false);
-      }
-    });
+    document.getElementById('scrub-prev-week-btn').addEventListener('click', () => jumpScrubberByDays(-7));
+    document.getElementById('scrub-prev-day-btn').addEventListener('click', () => jumpScrubberByDays(-1));
+    document.getElementById('scrub-next-day-btn').addEventListener('click', () => jumpScrubberByDays(1));
+    document.getElementById('scrub-next-week-btn').addEventListener('click', () => jumpScrubberByDays(7));
 
-    document.getElementById('scrub-next-week-btn').addEventListener('click', () => {
-      const nextIdx = Math.min(Math.max(activeFilteredSeries.length - 1, 0), selectedWeekIndex + 1);
-      if (typeof window.__highlightWeeklyIndex === 'function') {
-        window.__highlightWeeklyIndex(nextIdx, false);
-      }
-    });
-
-    document.getElementById('scrub-latest-week-btn').addEventListener('click', () => {
+    document.getElementById('scrub-latest-day-btn').addEventListener('click', () => {
       const latestIdx = Math.max(activeFilteredSeries.length - 1, 0);
-      if (typeof window.__highlightWeeklyIndex === 'function') {
-        window.__highlightWeeklyIndex(latestIdx, false);
+      if (typeof window.__highlightDailyIndex === 'function') {
+        window.__highlightDailyIndex(latestIdx, false);
       }
     });
 
@@ -1636,7 +1790,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'SCHD_Historical_Dividend_Yield_2011_2026.csv';
+      a.download = `SCHD_Historical_Dividend_Yield_2011_${CURRENT_YEAR}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1649,6 +1803,7 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
+      applyDynamicDateLabels();
       const hadCache = loadSessionCache();
       renderAnnualTable();
       updateCalculator();
@@ -1656,7 +1811,7 @@
       if (hadCache) {
         applyLiveStateToUI({ rebuildTable: true, preserveScrubIndex: false });
       }
-      syncFromPublishedSheet(false);
+      fetchLiveMarketData(false);
     });
   </script>
 </body>
