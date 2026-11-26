@@ -511,14 +511,14 @@
             <button
               id="copy-data-btn"
               type="button"
-              class="rounded-xl border border-borderSubtle bg-bgMain px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+              class="whitespace-nowrap rounded-xl border border-borderSubtle bg-bgMain px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
             >
               표 데이터 복사
             </button>
             <button
               id="download-csv-btn"
               type="button"
-              class="rounded-xl bg-orange-500/20 px-3 py-1.5 text-xs font-semibold text-orange-300 transition hover:bg-orange-500/30"
+              class="whitespace-nowrap rounded-xl bg-orange-500/20 px-3 py-1.5 text-xs font-semibold text-orange-300 transition hover:bg-orange-500/30"
             >
               CSV 다운로드
             </button>
@@ -526,15 +526,15 @@
         </div>
 
         <div class="overflow-x-auto rounded-xl border border-slate-800">
-          <table class="w-full border-collapse text-left text-xs sm:text-sm">
+          <table class="w-full min-w-[610px] border-collapse text-left text-xs sm:text-sm">
             <thead>
               <tr class="border-b border-slate-800 bg-bgMain text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">
-                <th class="px-3.5 py-3">연도</th>
-                <th class="px-3.5 py-3 text-right">평균 시가배당률</th>
-                <th class="px-3.5 py-3 text-right">연말 배당률</th>
-                <th class="px-3.5 py-3 text-right">연중 최고 / 최저</th>
-                <th class="px-3.5 py-3 text-right">연간 배당금($)</th>
-                <th class="px-3.5 py-3 text-right">배당 성장률</th>
+                <th class="whitespace-nowrap px-2.5 py-3 sm:px-3.5">연도</th>
+                <th class="whitespace-nowrap px-2.5 py-3 text-right sm:px-3.5">평균 시가배당률</th>
+                <th class="whitespace-nowrap px-2.5 py-3 text-right sm:px-3.5">연말 배당률</th>
+                <th class="whitespace-nowrap px-2.5 py-3 text-right sm:px-3.5">연중 최고 / 최저</th>
+                <th class="whitespace-nowrap px-2.5 py-3 text-right sm:px-3.5">연간 배당금($)</th>
+                <th class="whitespace-nowrap px-2.5 py-3 text-right sm:px-3.5">배당 성장률</th>
               </tr>
             </thead>
             <tbody id="annual-table-body" class="divide-y divide-slate-800/70 tabular-nums"></tbody>
@@ -1394,7 +1394,6 @@
         }
       }
 
-      /* 사선 배치로 겹침을 피하면서 X축 연·월 라벨을 더 촘촘하게 표시 */
       const minLabelGapPx = isNarrow ? 28 : 34;
       const xLabels = [];
       let lastLabelX = -Infinity;
@@ -1645,16 +1644,16 @@
           const divDecimals = idx === 0 ? 4 : 3;
           return `
             <tr class="transition-colors hover:bg-bgCardHover">
-              <td class="px-3.5 py-3 font-semibold text-white">${row.year}</td>
-              <td class="px-3.5 py-3 text-right font-mono font-bold ${isHighYield ? 'text-emerald-400' : 'text-orange-300'}">
+              <td class="whitespace-nowrap px-2.5 py-3 font-semibold text-white sm:px-3.5">${row.year}</td>
+              <td class="whitespace-nowrap px-2.5 py-3 text-right font-mono font-bold sm:px-3.5 ${isHighYield ? 'text-emerald-400' : 'text-orange-300'}">
                 ${row.avgYield.toFixed(2)}%
               </td>
-              <td class="px-3.5 py-3 text-right font-mono text-slate-200">${row.endYield.toFixed(2)}%</td>
-              <td class="px-3.5 py-3 text-right font-mono text-xs text-slate-400">
+              <td class="whitespace-nowrap px-2.5 py-3 text-right font-mono text-slate-200 sm:px-3.5">${row.endYield.toFixed(2)}%</td>
+              <td class="whitespace-nowrap px-2.5 py-3 text-right font-mono text-xs text-slate-400 sm:px-3.5">
                 <span class="text-emerald-400">${row.maxYield.toFixed(2)}%</span> / <span class="text-rose-400">${row.minYield.toFixed(2)}%</span>
               </td>
-              <td class="px-3.5 py-3 text-right font-mono font-semibold text-slate-100">$${row.dividend.toFixed(divDecimals)}</td>
-              <td class="px-3.5 py-3 text-right font-mono text-xs ${row.growth.startsWith('+') ? 'text-emerald-400' : 'text-slate-400'}">
+              <td class="whitespace-nowrap px-2.5 py-3 text-right font-mono font-semibold text-slate-100 sm:px-3.5">$${row.dividend.toFixed(divDecimals)}</td>
+              <td class="whitespace-nowrap px-2.5 py-3 text-right font-mono text-xs sm:px-3.5 ${row.growth.startsWith('+') ? 'text-emerald-400' : 'text-slate-400'}">
                 ${row.growth}
               </td>
             </tr>
